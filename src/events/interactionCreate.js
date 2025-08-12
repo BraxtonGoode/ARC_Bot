@@ -1,0 +1,61 @@
+const path = require('path');
+const fs = require('fs');
+const logger = require('../utils/logger');
+
+const charactersPath = path.join(__dirname, '..', 'data', 'characters.json');
+let characterChoices = [];
+try {
+  const raw = fs.readFileSync(charactersPath, 'utf8');
+  characterChoices = JSON.parse(raw);
+} catch (error) {
+  console.error('Error loading character list in interactionCreate.js:', error);
+  characterChoices = [{ name: 'Kyoshi', value: 'kyoshi' }];
+}
+
+module.exports = {
+  name: 'interactionCreate',
+  async execute(interaction, client) {
+    if (interaction.isAutocomplete()) {
+      const command = client.commands.get(interaction.commandName);
+      if (!command) return;
+
+      if (command.autocomplete) {
+        try {
+          await command.autocomplete(interaction);
+        } catch (error) {
+          console.error(`Error in autocomplete for /${command.data.name}:`, error);
+        }
+        return;
+      }
+
+      if (interaction.commandName === 'talenttree' || interaction.commandName === 'skills') {
+        const focusedValue = interaction.options.getFocused().toLowerCase();
+        const filtered = characterChoices
+          .filter(choice => choice.name.toLowerCase().includes(focusedValue))
+          .slice(0, 25)
+          .map(choice => ({ name: choice.name, value: choice.value }));
+        await interaction.respond(filtered);
+        return;
+      }
+
+      await interaction.respond([]);
+      return;
+    }
+
+    if (!interaction.isChatInputCommand()) return;
+
+    const command = client.commands.get(interaction.commandName);
+    if (!command) return;
+
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      logger.error('Error executing command:', error);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: 'An error occurred while executing the command.', flags: 64 });
+      } else {
+        await interaction.reply({ content: 'An error occurred while executing the command.', flags: 64 });
+      }
+    }
+  },
+};

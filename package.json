@@ -1,0 +1,14 @@
+{
+  "name": "arc_bot",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "author": "TheBraxMan, Lycaris",
+  "description": "ARC Bot",
+  "dependencies": {
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.2.1"
+  }
+}
