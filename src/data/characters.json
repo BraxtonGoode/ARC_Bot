@@ -28,5 +28,8 @@
   { "name": "Uncle_Iroh", "value": "uncle_iroh" },
   { "name": "Yangchen", "value": "yangchen" },
   { "name": "Yue", "value": "yue" },
-  { "name": "Zuko", "value": "zuko" }
+  { "name": "Zuko", "value": "zuko" },
+  { "name": "Cai", "value": "cai" },
+  { "name": "Fire Nation Aang", "value": "fire_nation_aang" },
+  { "name": "Kuruk", "value": "kuruk" }
 ]
