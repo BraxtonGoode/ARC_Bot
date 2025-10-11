@@ -31,5 +31,8 @@
   { "name": "Zuko", "value": "zuko" },
   { "name": "Cai", "value": "cai" },
   { "name": "Fire Nation Aang", "value": "fire_nation_aang" },
-  { "name": "Kuruk", "value": "kuruk" }
+  { "name": "Kuruk", "value": "kuruk" },
+  { "name": "Avatar Hunter Zuko", "value": "avatar_hunter_zuko" },
+  { "name": "Melon Lord", "value": "melon_lord" },
+  { "name": "Zaheer", "value": "zaheer" }
 ]
