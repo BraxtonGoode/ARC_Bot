@@ -33,7 +33,7 @@ module.exports = {
     const resolved = findClosestTierlist(tierlistChoice);
     if (!resolved) {
       return interaction.reply(
-        createErrorReply(`No matching tier list found for "${formatTierlistName(tierlistChoice)}".`)
+        createErrorReply(`No matching tier list found for "${tierlistChoice}".`)
       );
     }
 
