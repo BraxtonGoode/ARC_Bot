@@ -130,4 +130,5 @@ module.exports = {
       );
     }
   },
+  // autocomplete handled centrally in src/events/interactionCreate.js
 };

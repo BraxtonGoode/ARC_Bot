@@ -12,6 +12,16 @@ try {
   characterChoices = [{ name: 'Kyoshi', value: 'kyoshi' }];
 }
 
+const tierlistsPath = path.join(__dirname, '..', 'data', 'tierlists.json');
+let tierlistChoices = [];
+try {
+  const raw = fs.readFileSync(tierlistsPath, 'utf8');
+  tierlistChoices = JSON.parse(raw);
+} catch (error) {
+  console.error('Error loading tierlist list in interactionCreate.js:', error);
+  tierlistChoices = [{ name: 'Arena Tierlist', value: 'arena_tierlist' }];
+}
+
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction, client) {
@@ -23,17 +33,37 @@ module.exports = {
         try {
           await command.autocomplete(interaction);
         } catch (error) {
-          console.error(`Error in autocomplete for /${command.data.name}:`, error);
+          console.error(
+            `Error in autocomplete for /${command.data.name}:`,
+            error
+          );
         }
         return;
       }
 
-      if (interaction.commandName === 'talenttree' || interaction.commandName === 'skills') {
+      if (
+        interaction.commandName === 'talenttree' ||
+        interaction.commandName === 'skills'
+      ) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
         const filtered = characterChoices
-          .filter(choice => choice.name.toLowerCase().includes(focusedValue))
+          .filter((choice) => choice.name.toLowerCase().includes(focusedValue))
           .slice(0, 25)
-          .map(choice => ({ name: choice.name, value: choice.value }));
+          .map((choice) => ({ name: choice.name, value: choice.value }));
+        await interaction.respond(filtered);
+        return;
+      }
+
+      if (interaction.commandName === 'tierlist') {
+        const focusedValue = interaction.options.getFocused().toLowerCase();
+        const filtered = tierlistChoices
+          .filter(
+            (choice) =>
+              choice.name.toLowerCase().includes(focusedValue) ||
+              choice.value.toLowerCase().includes(focusedValue)
+          )
+          .slice(0, 25)
+          .map((choice) => ({ name: choice.name, value: choice.value }));
         await interaction.respond(filtered);
         return;
       }
@@ -52,9 +82,15 @@ module.exports = {
     } catch (error) {
       logger.error('Error executing command:', error);
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: 'An error occurred while executing the command.', flags: 64 });
+        await interaction.followUp({
+          content: 'An error occurred while executing the command.',
+          flags: 64,
+        });
       } else {
-        await interaction.reply({ content: 'An error occurred while executing the command.', flags: 64 });
+        await interaction.reply({
+          content: 'An error occurred while executing the command.',
+          flags: 64,
+        });
       }
     }
   },
