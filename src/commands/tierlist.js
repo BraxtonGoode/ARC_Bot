@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, ComponentType, AttachmentBuilder, MediaGalleryBuilder, MessageFlags } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  ComponentType,
+  AttachmentBuilder,
+  MediaGalleryBuilder,
+  MessageFlags,
+} = require('discord.js');
 const path = require('path');
 const fs = require('fs');
 const { createErrorReply } = require('../utils/helpers');
@@ -8,7 +14,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('tierlist')
     .setDescription('Get the current hero tier list')
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('tierlist')
         .setDescription('choose a tier list version')
@@ -20,12 +26,20 @@ module.exports = {
     const tierlistChoice = interaction.options.getString('tierlist');
     try {
       // load the selected tierlist JSON from data/tierlists/<choice>.json
-      const dataPath = path.join(__dirname, '..', 'data', 'tierlists', `${tierlistChoice}.json`);
+      const dataPath = path.join(
+        __dirname,
+        '..',
+        'data',
+        'tierlists',
+        `${tierlistChoice}.json`
+      );
       let dataRaw;
       try {
         dataRaw = await fs.promises.readFile(dataPath, 'utf8');
       } catch {
-        return interaction.reply(createErrorReply(`Couldn't load tier list "${tierlistChoice}" data.`));
+        return interaction.reply(
+          createErrorReply(`Couldn't load tier list "${tierlistChoice}" data.`)
+        );
       }
 
       const { providedBy, lastUpdated } = JSON.parse(dataRaw);
@@ -33,7 +47,12 @@ module.exports = {
 
       // look for an image in assets/tierlists named <choice>.webp (or png/jpg fallback)
       const assetsDir = path.join(__dirname, '..', 'assets', 'tierlists');
-      const possibleFiles = [`${tierlistChoice}.webp`, `${tierlistChoice}.png`, `${tierlistChoice}.jpg`, `${tierlistChoice}.jpeg`];
+      const possibleFiles = [
+        `${tierlistChoice}.webp`,
+        `${tierlistChoice}.png`,
+        `${tierlistChoice}.jpg`,
+        `${tierlistChoice}.jpeg`,
+      ];
       let imagePath = null;
       for (const f of possibleFiles) {
         const p = path.join(assetsDir, f);
@@ -47,17 +66,20 @@ module.exports = {
       }
 
       if (!imagePath) {
-        return interaction.reply(createErrorReply(`Couldn't find tier list image for "${tierlistChoice}".`));
+        return interaction.reply(
+          createErrorReply(
+            `Couldn't find tier list image for "${tierlistChoice}".`
+          )
+        );
       }
 
       const file = new AttachmentBuilder(imagePath);
 
-      const gallery = new MediaGalleryBuilder()
-        .addItems(item =>
-          item
-            .setDescription(`${tierlistChoice} Tier List`)
-            .setURL(`attachment://${path.basename(imagePath)}`)
-        );
+      const gallery = new MediaGalleryBuilder().addItems((item) =>
+        item
+          .setDescription(`${tierlistChoice} Tier List`)
+          .setURL(`attachment://${path.basename(imagePath)}`)
+      );
 
       return interaction.reply({
         flags: MessageFlags.IsComponentsV2,
@@ -66,21 +88,28 @@ module.exports = {
         components: [
           {
             type: ComponentType.Container,
-            accent_color: 0x3498DB,
+            accent_color: 0x3498db,
             components: [
-              { type: ComponentType.TextDisplay, content: `**${tierlistChoice} Tier List**` },
+              {
+                type: ComponentType.TextDisplay,
+                content: `**${tierlistChoice} Tier List**`,
+              },
               { type: ComponentType.Separator },
               gallery,
               { type: ComponentType.Separator },
-              { type: ComponentType.TextDisplay, content: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>` }
-            ]
-          }
-        ]
+              {
+                type: ComponentType.TextDisplay,
+                content: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`,
+              },
+            ],
+          },
+        ],
       });
-
     } catch (error) {
       console.error('/tierlist error:', error);
-      return interaction.reply(createErrorReply('Error while loading tier list.'));
+      return interaction.reply(
+        createErrorReply('Error while loading tier list.')
+      );
     }
-  }
+  },
 };
