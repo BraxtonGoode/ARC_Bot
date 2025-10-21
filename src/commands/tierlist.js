@@ -7,7 +7,11 @@ const {
 } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
-const { createErrorReply } = require('../utils/helpers');
+const {
+  createErrorReply,
+  formatTierlistName,
+  findClosestTierlist,
+} = require('../utils/helpers');
 
 module.exports = {
   name: 'tierlist',
@@ -24,6 +28,18 @@ module.exports = {
 
   async execute(interaction) {
     const tierlistChoice = interaction.options.getString('tierlist');
+
+    // resolve the user's input to an actual tierlist filename
+    const resolved = findClosestTierlist(tierlistChoice);
+    if (!resolved) {
+      return interaction.reply(
+        createErrorReply(`No matching tier list found for "${tierlistChoice}".`)
+      );
+    }
+
+    const filename = resolved; // filename without extension
+    const formattedTierlistName = formatTierlistName(filename);
+
     try {
       // load the selected tierlist JSON from data/tierlists/<choice>.json
       const dataPath = path.join(
@@ -31,14 +47,16 @@ module.exports = {
         '..',
         'data',
         'tierlists',
-        `${tierlistChoice}.json`
+        `${filename}.json`
       );
       let dataRaw;
       try {
         dataRaw = await fs.promises.readFile(dataPath, 'utf8');
       } catch {
         return interaction.reply(
-          createErrorReply(`Couldn't load tier list "${tierlistChoice}" data.`)
+          createErrorReply(
+            `Couldn't load tier list "${formattedTierlistName}" data.`
+          )
         );
       }
 
@@ -48,10 +66,10 @@ module.exports = {
       // look for an image in assets/tierlists named <choice>.webp (or png/jpg fallback)
       const assetsDir = path.join(__dirname, '..', 'assets', 'tierlists');
       const possibleFiles = [
-        `${tierlistChoice}.webp`,
-        `${tierlistChoice}.png`,
-        `${tierlistChoice}.jpg`,
-        `${tierlistChoice}.jpeg`,
+        `${filename}.webp`,
+        `${filename}.png`,
+        `${filename}.jpg`,
+        `${filename}.jpeg`,
       ];
       let imagePath = null;
       for (const f of possibleFiles) {
@@ -68,7 +86,7 @@ module.exports = {
       if (!imagePath) {
         return interaction.reply(
           createErrorReply(
-            `Couldn't find tier list image for "${tierlistChoice}".`
+            `Couldn't find tier list image for "${formattedTierlistName}".`
           )
         );
       }
@@ -77,7 +95,7 @@ module.exports = {
 
       const gallery = new MediaGalleryBuilder().addItems((item) =>
         item
-          .setDescription(`${tierlistChoice} Tier List`)
+          .setDescription(`${formattedTierlistName} Tier List`)
           .setURL(`attachment://${path.basename(imagePath)}`)
       );
 
@@ -92,7 +110,7 @@ module.exports = {
             components: [
               {
                 type: ComponentType.TextDisplay,
-                content: `**${tierlistChoice} Tier List**`,
+                content: `**${formattedTierlistName} Tier List**`,
               },
               { type: ComponentType.Separator },
               gallery,
