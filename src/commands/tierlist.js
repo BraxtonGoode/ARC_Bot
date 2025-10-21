@@ -7,26 +7,47 @@ module.exports = {
   name: 'tierlist',
   data: new SlashCommandBuilder()
     .setName('tierlist')
-    .setDescription('Get the current hero tier list'),
+    .setDescription('Get the current hero tier list')
+    .addStringOption(option =>
+      option
+        .setName('tierlist')
+        .setDescription('choose a tier list version')
+        .setRequired(true)
+        .setAutocomplete(true)
+    ),
 
   async execute(interaction) {
+    const tierlistChoice = interaction.options.getString('tierlist');
     try {
-      const jsonPath = path.join(__dirname, '..', 'data', 'tierlist.json');
-      let jsonRaw;
+      // load the selected tierlist JSON from data/tierlists/<choice>.json
+      const dataPath = path.join(__dirname, '..', 'data', 'tierlists', `${tierlistChoice}.json`);
+      let dataRaw;
       try {
-        jsonRaw = await fs.promises.readFile(jsonPath, 'utf8');
+        dataRaw = await fs.promises.readFile(dataPath, 'utf8');
       } catch {
-        return interaction.reply(createErrorReply(`Couldn't load tier list data.`));
+        return interaction.reply(createErrorReply(`Couldn't load tier list "${tierlistChoice}" data.`));
       }
 
-      const { providedBy, lastUpdated } = JSON.parse(jsonRaw);
+      const { providedBy, lastUpdated } = JSON.parse(dataRaw);
       const unixTimestamp = Math.floor(new Date(lastUpdated).getTime() / 1000);
 
-      const imagePath = path.join(__dirname, '..', 'assets', 'tierlist.webp');
-      try {
-        await fs.promises.access(imagePath);
-      } catch {
-        return interaction.reply(createErrorReply(`Couldn't find tier list image.`));
+      // look for an image in assets/tierlists named <choice>.webp (or png/jpg fallback)
+      const assetsDir = path.join(__dirname, '..', 'assets', 'tierlists');
+      const possibleFiles = [`${tierlistChoice}.webp`, `${tierlistChoice}.png`, `${tierlistChoice}.jpg`, `${tierlistChoice}.jpeg`];
+      let imagePath = null;
+      for (const f of possibleFiles) {
+        const p = path.join(assetsDir, f);
+        try {
+          await fs.promises.access(p);
+          imagePath = p;
+          break;
+        } catch {
+          // continue
+        }
+      }
+
+      if (!imagePath) {
+        return interaction.reply(createErrorReply(`Couldn't find tier list image for "${tierlistChoice}".`));
       }
 
       const file = new AttachmentBuilder(imagePath);
@@ -34,8 +55,8 @@ module.exports = {
       const gallery = new MediaGalleryBuilder()
         .addItems(item =>
           item
-            .setDescription('Hero Tier List')
-            .setURL(`attachment://tierlist.webp`)
+            .setDescription(`${tierlistChoice} Tier List`)
+            .setURL(`attachment://${path.basename(imagePath)}`)
         );
 
       return interaction.reply({
@@ -47,7 +68,7 @@ module.exports = {
             type: ComponentType.Container,
             accent_color: 0x3498DB,
             components: [
-              { type: ComponentType.TextDisplay, content: `**Hero Tier List**` },
+              { type: ComponentType.TextDisplay, content: `**${tierlistChoice} Tier List**` },
               { type: ComponentType.Separator },
               gallery,
               { type: ComponentType.Separator },
