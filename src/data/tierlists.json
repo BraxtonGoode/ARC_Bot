@@ -1,5 +1,4 @@
 [
   { "name": "Arena Tierlist", "value": "arena_tierlist" },
-  { "name": "General Tierlist", "value": "general_tierlist" },
-  { "name": "PvP Tierlist", "value": "pvp_tierlist" }
+  { "name": "General Tierlist", "value": "general_tierlist" }
 ]
