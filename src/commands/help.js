@@ -13,7 +13,7 @@ module.exports = {
 - /tip \`name\` - Get different gameplay tips.
 - /help - This help message.
 - /skills \`hero\` - Get the skill order for a hero.
-- /tierlist - Get the current hero tier list.
+- /tierlist \`type of tierlist\` - Get the current hero tier list.
 - /talenttree \`hero\` - Get the talent tree for a hero.\n
 **Example:**  
 Using  \`/skills Korra\` will show you Korra's skill order.\n
@@ -36,7 +36,7 @@ Autocomplete is also available when using commands.`;
               { type: ComponentType.Separator },
               { type: ComponentType.TextDisplay, content: helpText },
               { type: ComponentType.Separator },
-              { type: ComponentType.TextDisplay, content: `Bot by TheBraxMan - Fully rewritten by Lycaris (lycaris_1)` }
+              { type: ComponentType.TextDisplay, content: `Bot by TheBraxMan` }
             ]
           }
         ]
