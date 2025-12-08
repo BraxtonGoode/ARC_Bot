@@ -191,10 +191,26 @@ module.exports = {
             value: `${result.targetShards} shards`,
             inline: true,
           }
-        )
-        .setFooter({
+        );
+
+      // Add provider and date information if available
+      const footerParts = [];
+      if (shardsData.ProvidedBy) {
+        footerParts.push(`Data provided by ${shardsData.ProvidedBy}`);
+      }
+      if (shardsData.LastUpdated) {
+        const date = new Date(shardsData.LastUpdated);
+        const unixTimestamp = Math.floor(date.getTime() / 1000);
+        footerParts.push(`Last updated <t:${unixTimestamp}:D>`);
+      }
+
+      if (footerParts.length > 0) {
+        resultEmbed.setFooter({ text: footerParts.join(' • ') });
+      } else {
+        resultEmbed.setFooter({
           text: 'Calculation based on character shard requirements',
         });
+      }
 
       // Clear user selections after calculation
       this.userSelections.delete(userId);
