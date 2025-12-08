@@ -133,8 +133,8 @@ module.exports = {
         });
       }
 
-      // Parse metadata like talent tree command
-      const { providedBy, lastUpdated } = JSON.parse(dataRaw);
+      // Parse metadata from the shardsData object
+      const { providedBy, lastUpdated } = shardsData;
       const unixTimestamp = lastUpdated
         ? Math.floor(new Date(lastUpdated).getTime() / 1000)
         : null;
