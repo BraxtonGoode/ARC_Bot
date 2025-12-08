@@ -89,6 +89,21 @@ module.exports = {
             }
           }
         }
+      } else if (interaction.customId === 'calculate_skill_shards') {
+        const command = client.commands.get('skillcalculator');
+        if (command && command.handleButtonClick) {
+          try {
+            await command.handleButtonClick(interaction);
+          } catch (error) {
+            logger.error('Error handling button click:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
       }
       return;
     }
@@ -104,6 +119,25 @@ module.exports = {
         ].includes(interaction.customId)
       ) {
         const command = client.commands.get('shardcalculator');
+        if (command && command.handleSelectMenu) {
+          try {
+            await command.handleSelectMenu(interaction);
+          } catch (error) {
+            logger.error('Error handling select menu:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      } else if (
+        ['current_skill_level', 'target_skill_level'].includes(
+          interaction.customId
+        )
+      ) {
+        const command = client.commands.get('skillcalculator');
         if (command && command.handleSelectMenu) {
           try {
             await command.handleSelectMenu(interaction);
