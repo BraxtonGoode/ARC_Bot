@@ -198,9 +198,9 @@ module.exports = {
           }
         );
 
-      // Add provider and date information to footer - match talent tree format
+      // Add provider and date information to footer - simple string format
       resultEmbed.setFooter({
-        text: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`,
+        text: `Provided by ${providedBy} - Last updated on ${lastUpdated}`,
       });
 
       // Clear user selections after calculation
