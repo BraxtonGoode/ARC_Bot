@@ -195,18 +195,15 @@ module.exports = {
           }
         );
 
-      // Add provider and date information like talent tree command
-      const footerParts = [];
-      if (providedBy) {
-        footerParts.push(`Provided by ${providedBy}`);
-      }
-      if (unixTimestamp) {
-        footerParts.push(`Last updated on <t:${unixTimestamp}:D>`);
+      // Add provider and date information to footer
+      let footerText = 'Avatar Legends: Realms Collide';
+      if (providedBy && unixTimestamp) {
+        footerText = `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`;
+      } else if (providedBy) {
+        footerText = `Provided by ${providedBy}`;
       }
 
-      if (footerParts.length > 0) {
-        resultEmbed.setFooter({ text: footerParts.join(' - ') });
-      }
+      resultEmbed.setFooter({ text: footerText });
 
       // Clear user selections after calculation
       this.userSelections.delete(userId);
