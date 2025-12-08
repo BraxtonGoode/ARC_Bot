@@ -24,8 +24,8 @@ module.exports = {
       .setTitle('🧮 Character Shard Calculator')
       .setDescription(
         'Click the button below to open the shard calculator form.\n\n' +
-          '**Grade Format:** 1, 2, 3, 4, 5, or 6\n' +
-          '**Star Format:** 1, 2, 3, 4, or 5'
+          '**Stars:** 1, 2, 3, 4, 5, or 6 (character star level)\n' +
+          '**Grade:** 1, 2, 3, 4, or 5 (upgrade level within the star)'
       )
       .setColor(0x3498db);
 
@@ -67,46 +67,46 @@ module.exports = {
     }
 
     // Get form inputs
-    const currentGrade = parseInt(
-      interaction.fields.getTextInputValue('current_grade')
-    );
     const currentStars = parseInt(
       interaction.fields.getTextInputValue('current_stars')
     );
-    const targetGrade = parseInt(
-      interaction.fields.getTextInputValue('target_grade')
+    const currentGrade = parseInt(
+      interaction.fields.getTextInputValue('current_grade')
     );
     const targetStars = parseInt(
       interaction.fields.getTextInputValue('target_stars')
     );
+    const targetGrade = parseInt(
+      interaction.fields.getTextInputValue('target_grade')
+    );
 
     // Validate inputs
     if (
-      ![1, 2, 3, 4, 5, 6].includes(currentGrade) ||
-      ![1, 2, 3, 4, 5, 6].includes(targetGrade)
+      ![1, 2, 3, 4, 5, 6].includes(currentStars) ||
+      ![1, 2, 3, 4, 5, 6].includes(targetStars)
     ) {
       return interaction.reply({
-        content: '❌ Grade must be between 1 and 6.',
+        content: '❌ Stars must be between 1 and 6.',
         ephemeral: true,
       });
     }
 
     if (
-      ![1, 2, 3, 4, 5].includes(currentStars) ||
-      ![1, 2, 3, 4, 5].includes(targetStars)
+      ![1, 2, 3, 4, 5].includes(currentGrade) ||
+      ![1, 2, 3, 4, 5].includes(targetGrade)
     ) {
       return interaction.reply({
-        content: '❌ Stars must be between 1 and 5.',
+        content: '❌ Grade must be between 1 and 5.',
         ephemeral: true,
       });
     }
 
     const result = this.calculateShards(
       shardsData,
-      currentGrade,
       currentStars,
-      targetGrade,
-      targetStars
+      currentGrade,
+      targetStars,
+      targetGrade
     );
 
     if (result.error) {
@@ -119,16 +119,12 @@ module.exports = {
       .addFields(
         {
           name: '📍 Current Status',
-          value: `Grade ${currentGrade} - ${currentStars} Star${
-            currentStars > 1 ? 's' : ''
-          }`,
+          value: `${currentStars} Star - Grade ${currentGrade}`,
           inline: true,
         },
         {
           name: '🎯 Target Status',
-          value: `Grade ${targetGrade} - ${targetStars} Star${
-            targetStars > 1 ? 's' : ''
-          }`,
+          value: `${targetStars} Star - Grade ${targetGrade}`,
           inline: true,
         },
         {
@@ -164,43 +160,43 @@ module.exports = {
       .setCustomId('shard_calculator_modal')
       .setTitle('Character Shard Calculator');
 
-    const currentGradeInput = new TextInputBuilder()
-      .setCustomId('current_grade')
-      .setLabel('Current Grade (1-6)')
+    const currentStarsInput = new TextInputBuilder()
+      .setCustomId('current_stars')
+      .setLabel('Current Stars (1-6)')
       .setStyle(TextInputStyle.Short)
       .setPlaceholder('e.g., 3')
       .setRequired(true)
       .setMaxLength(1);
 
-    const currentStarsInput = new TextInputBuilder()
-      .setCustomId('current_stars')
-      .setLabel('Current Stars (1-5)')
+    const currentGradeInput = new TextInputBuilder()
+      .setCustomId('current_grade')
+      .setLabel('Current Grade (1-5)')
       .setStyle(TextInputStyle.Short)
       .setPlaceholder('e.g., 4')
       .setRequired(true)
       .setMaxLength(1);
 
-    const targetGradeInput = new TextInputBuilder()
-      .setCustomId('target_grade')
-      .setLabel('Target Grade (1-6)')
+    const targetStarsInput = new TextInputBuilder()
+      .setCustomId('target_stars')
+      .setLabel('Target Stars (1-6)')
       .setStyle(TextInputStyle.Short)
       .setPlaceholder('e.g., 5')
       .setRequired(true)
       .setMaxLength(1);
 
-    const targetStarsInput = new TextInputBuilder()
-      .setCustomId('target_stars')
-      .setLabel('Target Stars (1-5)')
+    const targetGradeInput = new TextInputBuilder()
+      .setCustomId('target_grade')
+      .setLabel('Target Grade (1-5)')
       .setStyle(TextInputStyle.Short)
       .setPlaceholder('e.g., 2')
       .setRequired(true)
       .setMaxLength(1);
 
     const rows = [
-      new ActionRowBuilder().addComponents(currentGradeInput),
       new ActionRowBuilder().addComponents(currentStarsInput),
-      new ActionRowBuilder().addComponents(targetGradeInput),
+      new ActionRowBuilder().addComponents(currentGradeInput),
       new ActionRowBuilder().addComponents(targetStarsInput),
+      new ActionRowBuilder().addComponents(targetGradeInput),
     ];
 
     modal.addComponents(...rows);
