@@ -195,12 +195,12 @@ module.exports = {
 
       // Add provider and date information if available
       const footerParts = [];
-      if (shardsData.ProvidedBy) {
-        footerParts.push(`Data provided by ${shardsData.ProvidedBy}`);
+      if (shardsData.providedBy) {
+        footerParts.push(`Data provided by ${shardsData.providedBy}`);
       }
-      if (shardsData.LastUpdated) {
-        const date = new Date(shardsData.LastUpdated);
-        const unixTimestamp = Math.floor(date.getTime() / 1000);
+      if (shardsData.lastUpdated) {
+        const { lastUpdated } = JSON.parse(dataRaw);
+        const unixTimestamp = Math.floor(new Date(lastUpdated).getTime() / 1000);
         footerParts.push(`Last updated <t:${unixTimestamp}:D>`);
       }
 

@@ -19,7 +19,7 @@
         {"skill_level": 17, "cost": 100}        
     ],
     "total_skill_shards": 720,
-    "ProvidedBy": "Zephros",
-    "LastUpdated": "2024-06-12"
+    "providedBy": "Zephros",
+    "lastUpdated": "2024-06-12"
 
 }
