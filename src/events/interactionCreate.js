@@ -74,13 +74,41 @@ module.exports = {
 
     // Handle button interactions
     if (interaction.isButton()) {
-      if (interaction.customId === 'open_shard_calculator') {
+      if (interaction.customId === 'calculate_shards') {
         const command = client.commands.get('shardcalculator');
         if (command && command.handleButtonClick) {
           try {
             await command.handleButtonClick(interaction);
           } catch (error) {
             logger.error('Error handling button click:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      }
+      return;
+    }
+
+    // Handle select menu interactions
+    if (interaction.isStringSelectMenu()) {
+      if (
+        [
+          'current_stars',
+          'current_grade',
+          'target_stars',
+          'target_grade',
+        ].includes(interaction.customId)
+      ) {
+        const command = client.commands.get('shardcalculator');
+        if (command && command.handleSelectMenu) {
+          try {
+            await command.handleSelectMenu(interaction);
+          } catch (error) {
+            logger.error('Error handling select menu:', error);
             if (!interaction.replied) {
               await interaction.reply({
                 content: 'An error occurred while processing your request.',

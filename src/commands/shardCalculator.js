@@ -3,11 +3,9 @@ const {
   EmbedBuilder,
   ComponentType,
   ButtonStyle,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
   ActionRowBuilder,
   ButtonBuilder,
+  StringSelectMenuBuilder,
 } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
@@ -23,185 +21,222 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('🧮 Character Shard Calculator')
       .setDescription(
-        'Click the button below to open the shard calculator form.\n\n' +
-          '**Stars:** 1, 2, 3, 4, 5, or 6 (character star level)\n' +
-          '**Grade:** 1, 2, 3, 4, or 5 (upgrade level within the star)'
+        'Use the dropdowns below to select your current and target character status.\n\n' +
+          '**Stars:** 1-6 (character star level)\n' +
+          '**Grade:** 1-5 (upgrade level within the star)'
       )
-      .setColor(0x3498db);
+      .setColor(0x3498db)
+      .addFields(
+        { name: 'Current Status', value: 'Not selected', inline: true },
+        { name: 'Target Status', value: 'Not selected', inline: true },
+        { name: '\u200b', value: '\u200b', inline: false }
+      );
 
-    const button = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('open_shard_calculator')
-        .setLabel('Open Shard Calculator')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('🧮')
-    );
+    const starOptions = [
+      { label: '1 Star', value: '1', emoji: '⭐' },
+      { label: '2 Stars', value: '2', emoji: '⭐' },
+      { label: '3 Stars', value: '3', emoji: '⭐' },
+      { label: '4 Stars', value: '4', emoji: '⭐' },
+      { label: '5 Stars', value: '5', emoji: '⭐' },
+      { label: '6 Stars', value: '6', emoji: '⭐' },
+    ];
+
+    const gradeOptions = [
+      { label: 'Grade 1', value: '1', emoji: '🔹' },
+      { label: 'Grade 2', value: '2', emoji: '🔹' },
+      { label: 'Grade 3', value: '3', emoji: '🔹' },
+      { label: 'Grade 4', value: '4', emoji: '🔹' },
+      { label: 'Grade 5', value: '5', emoji: '🔹' },
+    ];
+
+    const components = [
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('current_stars')
+          .setPlaceholder('Select current stars')
+          .addOptions(starOptions)
+      ),
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('current_grade')
+          .setPlaceholder('Select current grade')
+          .addOptions(gradeOptions)
+      ),
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('target_stars')
+          .setPlaceholder('Select target stars')
+          .addOptions(starOptions)
+      ),
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('target_grade')
+          .setPlaceholder('Select target grade')
+          .addOptions(gradeOptions)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('calculate_shards')
+          .setLabel('Calculate Shards Required')
+          .setStyle(ButtonStyle.Primary)
+          .setEmoji('🧮')
+      ),
+    ];
 
     return interaction.reply({
       embeds: [embed],
-      components: [button],
+      components: components,
     });
   },
 
-  async handleModalSubmit(interaction) {
-    if (interaction.customId !== 'shard_calculator_modal') return;
+  // Store user selections temporarily
+  userSelections: new Map(),
 
-    // Load character shards data
-    const shardsPath = path.join(
-      __dirname,
-      '..',
-      'data',
-      'shards',
-      'character_shards.json'
-    );
-    let shardsData;
+  async handleSelectMenu(interaction) {
+    const userId = interaction.user.id;
 
-    try {
-      const shardsRaw = await fs.promises.readFile(shardsPath, 'utf8');
-      shardsData = JSON.parse(shardsRaw);
-    } catch {
-      return interaction.reply({
-        content: 'Unable to load shard data.',
-        ephemeral: true,
-      });
+    // Initialize user selections if not exists
+    if (!this.userSelections.has(userId)) {
+      this.userSelections.set(userId, {});
     }
 
-    // Get form inputs
-    const currentStars = parseInt(
-      interaction.fields.getTextInputValue('current_stars')
-    );
-    const currentGrade = parseInt(
-      interaction.fields.getTextInputValue('current_grade')
-    );
-    const targetStars = parseInt(
-      interaction.fields.getTextInputValue('target_stars')
-    );
-    const targetGrade = parseInt(
-      interaction.fields.getTextInputValue('target_grade')
-    );
+    const userSelection = this.userSelections.get(userId);
+    userSelection[interaction.customId] = interaction.values[0];
 
-    // Validate inputs
-    if (
-      ![1, 2, 3, 4, 5, 6].includes(currentStars) ||
-      ![1, 2, 3, 4, 5, 6].includes(targetStars)
-    ) {
-      return interaction.reply({
-        content: '❌ Stars must be between 1 and 6.',
-        ephemeral: true,
-      });
-    }
-
-    if (
-      ![1, 2, 3, 4, 5].includes(currentGrade) ||
-      ![1, 2, 3, 4, 5].includes(targetGrade)
-    ) {
-      return interaction.reply({
-        content: '❌ Grade must be between 1 and 5.',
-        ephemeral: true,
-      });
-    }
-
-    const result = this.calculateShards(
-      shardsData,
-      currentStars,
-      currentGrade,
-      targetStars,
-      targetGrade
-    );
-
-    if (result.error) {
-      return interaction.reply({ content: result.error, ephemeral: true });
-    }
-
-    const resultEmbed = new EmbedBuilder()
-      .setTitle('📊 Shard Calculation Result')
-      .setColor(0x00ff00)
+    // Update the embed to show current selections
+    const embed = new EmbedBuilder()
+      .setTitle('🧮 Character Shard Calculator')
+      .setDescription(
+        'Use the dropdowns below to select your current and target character status.\n\n' +
+          '**Stars:** 1-6 (character star level)\n' +
+          '**Grade:** 1-5 (upgrade level within the star)'
+      )
+      .setColor(0x3498db)
       .addFields(
         {
-          name: '📍 Current Status',
-          value: `${currentStars} Star - Grade ${currentGrade}`,
+          name: 'Current Status',
+          value:
+            userSelection.current_stars && userSelection.current_grade
+              ? `${userSelection.current_stars} Star - Grade ${userSelection.current_grade}`
+              : 'Not fully selected',
           inline: true,
         },
         {
-          name: '🎯 Target Status',
-          value: `${targetStars} Star - Grade ${targetGrade}`,
+          name: 'Target Status',
+          value:
+            userSelection.target_stars && userSelection.target_grade
+              ? `${userSelection.target_stars} Star - Grade ${userSelection.target_grade}`
+              : 'Not fully selected',
           inline: true,
         },
-        {
-          name: '\u200b',
-          value: '\u200b',
-          inline: false,
-        },
-        {
-          name: '📊 Target Total',
-          value: `${result.targetShards} shards`,
-          inline: true,
-        },
-        {
-          name: '📈 Current Total',
-          value: `${result.currentShards} shards`,
-          inline: true,
-        },
-        {
-          name: '💎 Shards Required',
-          value: `**${result.shardsNeeded}** shards`,
-          inline: true,
-        }
+        { name: '\u200b', value: '\u200b', inline: false }
+      );
 
-      )
-      .setFooter({ text: 'Calculation based on character shard requirements' });
-
-    return interaction.reply({ embeds: [resultEmbed] });
+    await interaction.update({
+      embeds: [embed],
+      components: interaction.message.components,
+    });
   },
 
   async handleButtonClick(interaction) {
-    if (interaction.customId !== 'open_shard_calculator') return;
+    if (interaction.customId === 'calculate_shards') {
+      const userId = interaction.user.id;
+      const userSelection = this.userSelections.get(userId);
 
-    const modal = new ModalBuilder()
-      .setCustomId('shard_calculator_modal')
-      .setTitle('Character Shard Calculator');
+      if (
+        !userSelection ||
+        !userSelection.current_stars ||
+        !userSelection.current_grade ||
+        !userSelection.target_stars ||
+        !userSelection.target_grade
+      ) {
+        return interaction.reply({
+          content: '❌ Please select all options before calculating.',
+          ephemeral: true,
+        });
+      }
 
-    const currentStarsInput = new TextInputBuilder()
-      .setCustomId('current_stars')
-      .setLabel('Current Stars (1-6)')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 3')
-      .setRequired(true)
-      .setMaxLength(1);
+      // Load character shards data
+      const shardsPath = path.join(
+        __dirname,
+        '..',
+        'data',
+        'shards',
+        'character_shards.json'
+      );
+      let shardsData;
 
-    const currentGradeInput = new TextInputBuilder()
-      .setCustomId('current_grade')
-      .setLabel('Current Grade (1-5)')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 4')
-      .setRequired(true)
-      .setMaxLength(1);
+      try {
+        const shardsRaw = await fs.promises.readFile(shardsPath, 'utf8');
+        shardsData = JSON.parse(shardsRaw);
+      } catch {
+        return interaction.reply({
+          content: 'Unable to load shard data.',
+          ephemeral: true,
+        });
+      }
 
-    const targetStarsInput = new TextInputBuilder()
-      .setCustomId('target_stars')
-      .setLabel('Target Stars (1-6)')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 5')
-      .setRequired(true)
-      .setMaxLength(1);
+      const currentStars = parseInt(userSelection.current_stars);
+      const currentGrade = parseInt(userSelection.current_grade);
+      const targetStars = parseInt(userSelection.target_stars);
+      const targetGrade = parseInt(userSelection.target_grade);
 
-    const targetGradeInput = new TextInputBuilder()
-      .setCustomId('target_grade')
-      .setLabel('Target Grade (1-5)')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., 2')
-      .setRequired(true)
-      .setMaxLength(1);
+      const result = this.calculateShards(
+        shardsData,
+        currentStars,
+        currentGrade,
+        targetStars,
+        targetGrade
+      );
 
-    const rows = [
-      new ActionRowBuilder().addComponents(currentStarsInput),
-      new ActionRowBuilder().addComponents(currentGradeInput),
-      new ActionRowBuilder().addComponents(targetStarsInput),
-      new ActionRowBuilder().addComponents(targetGradeInput),
-    ];
+      if (result.error) {
+        return interaction.reply({ content: result.error, ephemeral: true });
+      }
 
-    modal.addComponents(...rows);
-    await interaction.showModal(modal);
+      const resultEmbed = new EmbedBuilder()
+        .setTitle('📊 Shard Calculation Result')
+        .setColor(0x00ff00)
+        .addFields(
+          {
+            name: '📍 Current Status',
+            value: `${currentStars} Star - Grade ${currentGrade}`,
+            inline: true,
+          },
+          {
+            name: '🎯 Target Status',
+            value: `${targetStars} Star - Grade ${targetGrade}`,
+            inline: true,
+          },
+          {
+            name: '\u200b',
+            value: '\u200b',
+            inline: false,
+          },
+          {
+            name: '💎 Shards Required',
+            value: `**${result.shardsNeeded}** shards`,
+            inline: true,
+          },
+          {
+            name: '📈 Current Total',
+            value: `${result.currentShards} shards`,
+            inline: true,
+          },
+          {
+            name: '📊 Target Total',
+            value: `${result.targetShards} shards`,
+            inline: true,
+          }
+        )
+        .setFooter({
+          text: 'Calculation based on character shard requirements',
+        });
+
+      // Clear user selections after calculation
+      this.userSelections.delete(userId);
+
+      return interaction.reply({ embeds: [resultEmbed] });
+    }
   },
 
   calculateShards(
