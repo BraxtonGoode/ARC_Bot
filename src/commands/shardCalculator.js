@@ -17,7 +17,7 @@ module.exports = {
   name: 'shardcalculator',
   data: new SlashCommandBuilder()
     .setName('shardcalculator')
-    .setDescription('Calculate character shards needed to upgrade'),
+    .setDescription('Calculate character shards needed to upgrade hero'),
 
   async execute(interaction) {
     const embed = new EmbedBuilder()
@@ -133,8 +133,8 @@ module.exports = {
           inline: false,
         },
         {
-          name: '💎 Shards Required',
-          value: `**${result.shardsNeeded}** shards`,
+          name: '📊 Target Total',
+          value: `${result.targetShards} shards`,
           inline: true,
         },
         {
@@ -143,10 +143,11 @@ module.exports = {
           inline: true,
         },
         {
-          name: '📊 Target Total',
-          value: `${result.targetShards} shards`,
+          name: '💎 Shards Required',
+          value: `**${result.shardsNeeded}** shards`,
           inline: true,
         }
+
       )
       .setFooter({ text: 'Calculation based on character shard requirements' });
 
