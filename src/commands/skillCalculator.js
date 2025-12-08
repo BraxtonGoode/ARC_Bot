@@ -121,16 +121,23 @@ module.exports = {
         'skill_shards.json'
       );
       let shardsData;
+      let dataRaw;
 
       try {
-        const shardsRaw = await fs.promises.readFile(shardsPath, 'utf8');
-        shardsData = JSON.parse(shardsRaw);
+        dataRaw = await fs.promises.readFile(shardsPath, 'utf8');
+        shardsData = JSON.parse(dataRaw);
       } catch {
         return interaction.reply({
           content: 'Unable to load skill shard data.',
           ephemeral: true,
         });
       }
+
+      // Parse metadata like talent tree command
+      const { providedBy, lastUpdated } = JSON.parse(dataRaw);
+      const unixTimestamp = lastUpdated
+        ? Math.floor(new Date(lastUpdated).getTime() / 1000)
+        : null;
 
       const currentLevel = parseInt(userSelection.current_skill_level);
       const targetLevel = parseInt(userSelection.target_skill_level);
@@ -188,14 +195,12 @@ module.exports = {
           }
         );
 
-      // Add provider and date information if available
+      // Add provider and date information like talent tree command
       const footerParts = [];
-      if (shardsData.providedBy) {
-        footerParts.push(`Provided by ${shardsData.providedBy}`);
+      if (providedBy) {
+        footerParts.push(`Provided by ${providedBy}`);
       }
-      if (shardsData.lastUpdated) {
-        const date = new Date(shardsData.lastUpdated);
-        const unixTimestamp = Math.floor(date.getTime() / 1000);
+      if (unixTimestamp) {
         footerParts.push(`Last updated on <t:${unixTimestamp}:D>`);
       }
 
