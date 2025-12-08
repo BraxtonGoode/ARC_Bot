@@ -22,9 +22,11 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('🧮 Character Shard Calculator')
       .setDescription(
-        'Select your current and target character status, then click Calculate.\n\n' +
+        "Select your character's current and target status, then click Calculate.\n\n" +
           '**Stars:** 1-6 (character star level)\n' +
-          '**Grade:** 1-5 (upgrade level within the star)'
+          '**Grades:** 1-5 (upgrade pieces within each star)\n\n' +
+          'Each character has 6 stars, and within each star there are 5 grades (pieces). ' +
+          "Select your character's current star level and grade, then choose what you want to reach."
       )
       .setColor(0x3498db);
 
