@@ -72,6 +72,44 @@ module.exports = {
       return;
     }
 
+    // Handle button interactions
+    if (interaction.isButton()) {
+      const command = client.commands.get('shardCalculator');
+      if (command && command.handleButtonClick) {
+        try {
+          await command.handleButtonClick(interaction);
+        } catch (error) {
+          logger.error('Error handling button click:', error);
+          if (!interaction.replied) {
+            await interaction.reply({
+              content: 'An error occurred while processing your request.',
+              ephemeral: true,
+            });
+          }
+        }
+      }
+      return;
+    }
+
+    // Handle modal submissions
+    if (interaction.isModalSubmit()) {
+      const command = client.commands.get('shardCalculator');
+      if (command && command.handleModalSubmit) {
+        try {
+          await command.handleModalSubmit(interaction);
+        } catch (error) {
+          logger.error('Error handling modal submit:', error);
+          if (!interaction.replied) {
+            await interaction.reply({
+              content: 'An error occurred while processing your request.',
+              ephemeral: true,
+            });
+          }
+        }
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
