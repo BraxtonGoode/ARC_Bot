@@ -141,11 +141,9 @@ module.exports = {
         });
       }
 
-      // Parse metadata from the shardsData object
+      // Parse metadata from the shardsData object - match talent tree format
       const { providedBy, lastUpdated } = shardsData;
-      const unixTimestamp = lastUpdated
-        ? Math.floor(new Date(lastUpdated).getTime() / 1000)
-        : null;
+      const unixTimestamp = Math.floor(new Date(lastUpdated).getTime() / 1000);
 
       const currentStars = parseInt(userSelection.current_stars);
       const currentGrade = parseInt(userSelection.current_grade);
@@ -200,15 +198,10 @@ module.exports = {
           }
         );
 
-      // Add provider and date information to footer
-      let footerText = 'Avatar Legends: Realms Collide';
-      if (providedBy && unixTimestamp) {
-        footerText = `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`;
-      } else if (providedBy) {
-        footerText = `Provided by ${providedBy}`;
-      }
-
-      resultEmbed.setFooter({ text: footerText });
+      // Add provider and date information to footer - match talent tree format
+      resultEmbed.setFooter({
+        text: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`,
+      });
 
       // Clear user selections after calculation
       this.userSelections.delete(userId);
