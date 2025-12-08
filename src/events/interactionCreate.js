@@ -72,6 +72,110 @@ module.exports = {
       return;
     }
 
+    // Handle button interactions
+    if (interaction.isButton()) {
+      if (interaction.customId === 'calculate_shards') {
+        const command = client.commands.get('shardcalculator');
+        if (command && command.handleButtonClick) {
+          try {
+            await command.handleButtonClick(interaction);
+          } catch (error) {
+            logger.error('Error handling button click:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      } else if (interaction.customId === 'calculate_skill_shards') {
+        const command = client.commands.get('skillcalculator');
+        if (command && command.handleButtonClick) {
+          try {
+            await command.handleButtonClick(interaction);
+          } catch (error) {
+            logger.error('Error handling button click:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      }
+      return;
+    }
+
+    // Handle select menu interactions
+    if (interaction.isStringSelectMenu()) {
+      if (
+        [
+          'current_stars',
+          'current_grade',
+          'target_stars',
+          'target_grade',
+        ].includes(interaction.customId)
+      ) {
+        const command = client.commands.get('shardcalculator');
+        if (command && command.handleSelectMenu) {
+          try {
+            await command.handleSelectMenu(interaction);
+          } catch (error) {
+            logger.error('Error handling select menu:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      } else if (
+        ['current_skill_level', 'target_skill_level'].includes(
+          interaction.customId
+        )
+      ) {
+        const command = client.commands.get('skillcalculator');
+        if (command && command.handleSelectMenu) {
+          try {
+            await command.handleSelectMenu(interaction);
+          } catch (error) {
+            logger.error('Error handling select menu:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      }
+      return;
+    }
+
+    // Handle modal submissions
+    if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'shard_calculator_modal') {
+        const command = client.commands.get('shardcalculator');
+        if (command && command.handleModalSubmit) {
+          try {
+            await command.handleModalSubmit(interaction);
+          } catch (error) {
+            logger.error('Error handling modal submit:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);

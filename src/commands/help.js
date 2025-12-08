@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, ComponentType, MessageFlags } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  ComponentType,
+  MessageFlags,
+} = require('discord.js');
 const config = require('../config');
 
 module.exports = {
@@ -14,9 +18,15 @@ module.exports = {
 - /help - This help message.
 - /skills \`hero\` - Get the skill order for a hero.
 - /tierlist \`type of tierlist\` - Get the current hero tier list.
-- /talenttree \`hero\` - Get the talent tree for a hero.\n
+- /talenttree \`hero\` - Get the talent tree for a hero.
+- /shardcalculator - Calculate character shards needed for star/grade upgrades.
+- /skillcalculator - Calculate skill shards needed for skill level upgrades.\n
+**Calculators:**  
+The shard calculator helps you determine how many character shards you need to upgrade from your current star/grade to your target level.
+The skill calculator shows how many skill shards are required to upgrade skills from level 1-18.\n
 **Example:**  
-Using  \`/skills Korra\` will show you Korra's skill order.\n
+Using  \`/skills Korra\` will show you Korra's skill order.
+Using \`/shardcalculator\` opens an interactive calculator for character upgrades.\n
 **Good to know:**  
 The bot automatically finds the closest matching hero, so you don't need to write the full name.  
 For example, typing "Lin" or "Beifong" will get Lin Beifong, "Uncle" or "Iroh" will get Uncle Iroh.
@@ -28,18 +38,24 @@ Autocomplete is also available when using commands.`;
         components: [
           {
             type: ComponentType.Container,
-            accent_color: 0x3498DB,
+            accent_color: 0x3498db,
             components: [
-              { type: ComponentType.TextDisplay, content: `**${config.botName} - Version ${config.botVersion}**` },
+              {
+                type: ComponentType.TextDisplay,
+                content: `**${config.botName} - Version ${config.botVersion}**`,
+              },
               { type: ComponentType.Separator },
-              { type: ComponentType.TextDisplay, content: `Get talent trees, skill orders, and gameplay tips for Avatar: Realms Collide.` },
+              {
+                type: ComponentType.TextDisplay,
+                content: `Get talent trees, skill orders, and gameplay tips for Avatar: Realms Collide.`,
+              },
               { type: ComponentType.Separator },
               { type: ComponentType.TextDisplay, content: helpText },
               { type: ComponentType.Separator },
-              { type: ComponentType.TextDisplay, content: `Bot by TheBraxMan` }
-            ]
-          }
-        ]
+              { type: ComponentType.TextDisplay, content: `Bot by TheBraxMan` },
+            ],
+          },
+        ],
       });
     } catch (error) {
       console.error('/help error:', error);
@@ -48,11 +64,16 @@ Autocomplete is also available when using commands.`;
         components: [
           {
             type: ComponentType.Container,
-            accent_color: 0xE74C3C,
-            components: [{ type: ComponentType.TextDisplay, content: 'Error while loading help menu.' }]
-          }
-        ]
+            accent_color: 0xe74c3c,
+            components: [
+              {
+                type: ComponentType.TextDisplay,
+                content: 'Error while loading help menu.',
+              },
+            ],
+          },
+        ],
       });
     }
-  }
+  },
 };

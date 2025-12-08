@@ -1,0 +1,25 @@
+{
+    "skill_upgrade_cost" : [
+        {"skill_level": 1, "cost": 10},
+        {"skill_level": 2, "cost": 10},
+        {"skill_level": 3, "cost": 10},
+        {"skill_level": 4, "cost": 20},
+        {"skill_level": 5, "cost": 20},
+        {"skill_level": 6, "cost": 20},
+        {"skill_level": 7, "cost": 30},
+        {"skill_level": 8, "cost": 30},
+        {"skill_level": 9, "cost": 40},
+        {"skill_level": 10, "cost": 40},
+        {"skill_level": 11, "cost": 40},
+        {"skill_level": 12, "cost": 50},
+        {"skill_level": 13, "cost": 60},
+        {"skill_level": 14, "cost": 70},
+        {"skill_level": 15, "cost": 80},
+        {"skill_level": 16, "cost": 90},
+        {"skill_level": 17, "cost": 100}        
+    ],
+    "total_skill_shards": 720,
+    "providedBy": "Zephros",
+    "lastUpdated": "2024-12-06"
+
+}
