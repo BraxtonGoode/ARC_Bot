@@ -191,16 +191,16 @@ module.exports = {
       // Add provider and date information if available
       const footerParts = [];
       if (shardsData.providedBy) {
-        footerParts.push(`Data provided by ${shardsData.providedBy}`);
+        footerParts.push(`Provided by ${shardsData.providedBy}`);
       }
       if (shardsData.lastUpdated) {
         const date = new Date(shardsData.lastUpdated);
         const unixTimestamp = Math.floor(date.getTime() / 1000);
-        footerParts.push(`Last updated <t:${unixTimestamp}:D>`);
+        footerParts.push(`Last updated on <t:${unixTimestamp}:D>`);
       }
 
       if (footerParts.length > 0) {
-        resultEmbed.setFooter({ text: footerParts.join(' • ') });
+        resultEmbed.setFooter({ text: footerParts.join(' - ') });
       }
 
       // Clear user selections after calculation
