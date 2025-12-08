@@ -194,8 +194,8 @@ module.exports = {
         footerParts.push(`Data provided by ${shardsData.providedBy}`);
       }
       if (shardsData.lastUpdated) {
-        const { lastUpdated } = JSON.parse(dataRaw);
-        const unixTimestamp = Math.floor(new Date(lastUpdated).getTime() / 1000);
+        const date = new Date(shardsData.lastUpdated);
+        const unixTimestamp = Math.floor(date.getTime() / 1000);
         footerParts.push(`Last updated <t:${unixTimestamp}:D>`);
       }
 
