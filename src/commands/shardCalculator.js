@@ -198,9 +198,9 @@ module.exports = {
           }
         );
 
-      // Add provider and date information to footer - simple string format
+      // Add provider and date information to footer - test both formats
       resultEmbed.setFooter({
-        text: `Provided by ${providedBy} - Last updated on ${lastUpdated}`,
+        text: `Provided by ${providedBy} - Last updated on ${lastUpdated}\nTest Discord timestamp: <t:${unixTimestamp}:D>`,
       });
 
       // Clear user selections after calculation
