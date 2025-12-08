@@ -14,7 +14,7 @@ const fs = require('fs');
 const { createErrorReply } = require('../utils/helpers');
 
 module.exports = {
-  name: 'shardCalculator',
+  name: 'shardcalculator',
   data: new SlashCommandBuilder()
     .setName('shardcalculator')
     .setDescription('Calculate character shards needed to upgrade'),

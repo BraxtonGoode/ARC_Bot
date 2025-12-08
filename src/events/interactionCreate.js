@@ -74,17 +74,19 @@ module.exports = {
 
     // Handle button interactions
     if (interaction.isButton()) {
-      const command = client.commands.get('shardCalculator');
-      if (command && command.handleButtonClick) {
-        try {
-          await command.handleButtonClick(interaction);
-        } catch (error) {
-          logger.error('Error handling button click:', error);
-          if (!interaction.replied) {
-            await interaction.reply({
-              content: 'An error occurred while processing your request.',
-              ephemeral: true,
-            });
+      if (interaction.customId === 'open_shard_calculator') {
+        const command = client.commands.get('shardcalculator');
+        if (command && command.handleButtonClick) {
+          try {
+            await command.handleButtonClick(interaction);
+          } catch (error) {
+            logger.error('Error handling button click:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
           }
         }
       }
@@ -93,17 +95,19 @@ module.exports = {
 
     // Handle modal submissions
     if (interaction.isModalSubmit()) {
-      const command = client.commands.get('shardCalculator');
-      if (command && command.handleModalSubmit) {
-        try {
-          await command.handleModalSubmit(interaction);
-        } catch (error) {
-          logger.error('Error handling modal submit:', error);
-          if (!interaction.replied) {
-            await interaction.reply({
-              content: 'An error occurred while processing your request.',
-              ephemeral: true,
-            });
+      if (interaction.customId === 'shard_calculator_modal') {
+        const command = client.commands.get('shardcalculator');
+        if (command && command.handleModalSubmit) {
+          try {
+            await command.handleModalSubmit(interaction);
+          } catch (error) {
+            logger.error('Error handling modal submit:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
           }
         }
       }
