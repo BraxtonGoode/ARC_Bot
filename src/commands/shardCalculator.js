@@ -21,16 +21,11 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('🧮 Character Shard Calculator')
       .setDescription(
-        'Use the dropdowns below to select your current and target character status.\n\n' +
+        'Select your current and target character status, then click Calculate.\n\n' +
           '**Stars:** 1-6 (character star level)\n' +
           '**Grade:** 1-5 (upgrade level within the star)'
       )
-      .setColor(0x3498db)
-      .addFields(
-        { name: 'Current Status', value: 'Not selected', inline: true },
-        { name: 'Target Status', value: 'Not selected', inline: true },
-        { name: '\u200b', value: '\u200b', inline: false }
-      );
+      .setColor(0x3498db);
 
     const starOptions = [
       { label: '1 Star', value: '1', emoji: '⭐' },
@@ -103,39 +98,8 @@ module.exports = {
     const userSelection = this.userSelections.get(userId);
     userSelection[interaction.customId] = interaction.values[0];
 
-    // Update the embed to show current selections
-    const embed = new EmbedBuilder()
-      .setTitle('🧮 Character Shard Calculator')
-      .setDescription(
-        'Use the dropdowns below to select your current and target character status.\n\n' +
-          '**Stars:** 1-6 (character star level)\n' +
-          '**Grade:** 1-5 (upgrade level within the star)'
-      )
-      .setColor(0x3498db)
-      .addFields(
-        {
-          name: 'Current Status',
-          value:
-            userSelection.current_stars && userSelection.current_grade
-              ? `${userSelection.current_stars} Star - Grade ${userSelection.current_grade}`
-              : 'Not fully selected',
-          inline: true,
-        },
-        {
-          name: 'Target Status',
-          value:
-            userSelection.target_stars && userSelection.target_grade
-              ? `${userSelection.target_stars} Star - Grade ${userSelection.target_grade}`
-              : 'Not fully selected',
-          inline: true,
-        },
-        { name: '\u200b', value: '\u200b', inline: false }
-      );
-
-    await interaction.update({
-      embeds: [embed],
-      components: interaction.message.components,
-    });
+    // Just acknowledge the selection without updating the message
+    await interaction.deferUpdate();
   },
 
   async handleButtonClick(interaction) {
