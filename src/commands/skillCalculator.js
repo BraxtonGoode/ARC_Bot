@@ -6,6 +6,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   StringSelectMenuBuilder,
+  MessageFlags,
 } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
@@ -150,58 +151,61 @@ module.exports = {
         return interaction.reply({ content: result.error, ephemeral: true });
       }
 
-      const resultEmbed = new EmbedBuilder()
-        .setTitle('📊 Skill Shard Calculation Result')
-        .setColor(0x00ff00)
-        .addFields(
-          {
-            name: '📍 Current Level',
-            value:
-              currentLevel === 1
-                ? 'Level 1 (No upgrades)'
-                : `Level ${currentLevel} (${currentLevel - 1} upgrade${
-                    currentLevel - 1 > 1 ? 's' : ''
-                  })`,
-            inline: true,
-          },
-          {
-            name: '🎯 Target Level',
-            value: `Level ${targetLevel} (${targetLevel - 1} upgrade${
-              targetLevel - 1 > 1 ? 's' : ''
-            })`,
-            inline: true,
-          },
-          {
-            name: '\u200b',
-            value: '\u200b',
-            inline: false,
-          },
-          {
-            name: '⚡ Skill Shards Required',
-            value: `**${result.shardsNeeded}** shards`,
-            inline: true,
-          },
-          {
-            name: '📈 Current Total Invested',
-            value: `${result.currentShards} shards`,
-            inline: true,
-          },
-          {
-            name: '📊 Target Total',
-            value: `${result.targetShards} shards`,
-            inline: true,
-          }
-        );
-
-      // Add provider and date information to footer - test both formats
-      resultEmbed.setFooter({
-        text: `Provided by ${providedBy} - Last updated on ${lastUpdated}\nTest Discord timestamp: <t:${unixTimestamp}:D>`,
-      });
-
       // Clear user selections after calculation
       this.userSelections.delete(userId);
 
-      return interaction.reply({ embeds: [resultEmbed] });
+      // Create response using ComponentType.TextDisplay like talent tree
+      return interaction.reply({
+        flags: MessageFlags.IsComponentsV2,
+        allowedMentions: { parse: [] },
+        components: [
+          {
+            type: ComponentType.Container,
+            accent_color: 0x00ff00,
+            components: [
+              {
+                type: ComponentType.TextDisplay,
+                content: `**📊 Skill Shard Calculation Result**`,
+              },
+              { type: ComponentType.Separator },
+              {
+                type: ComponentType.TextDisplay,
+                content: `📍 **Current Level**\nLevel ${currentLevel}${
+                  currentLevel === 1
+                    ? ' (No upgrades)'
+                    : ` (${currentLevel - 1} upgrade${
+                        currentLevel - 1 > 1 ? 's' : ''
+                      })`
+                }`,
+              },
+              {
+                type: ComponentType.TextDisplay,
+                content: `🎯 **Target Level**\nLevel ${targetLevel} (${
+                  targetLevel - 1
+                } upgrade${targetLevel - 1 > 1 ? 's' : ''})`,
+              },
+              { type: ComponentType.Separator },
+              {
+                type: ComponentType.TextDisplay,
+                content: `⚡ **Skill Shards Required**\n**${result.shardsNeeded}** shards`,
+              },
+              {
+                type: ComponentType.TextDisplay,
+                content: `📈 **Current Total Invested**\n${result.currentShards} shards`,
+              },
+              {
+                type: ComponentType.TextDisplay,
+                content: `📊 **Target Total**\n${result.targetShards} shards`,
+              },
+              { type: ComponentType.Separator },
+              {
+                type: ComponentType.TextDisplay,
+                content: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`,
+              },
+            ],
+          },
+        ],
+      });
     }
   },
 

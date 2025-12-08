@@ -6,6 +6,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   StringSelectMenuBuilder,
+  MessageFlags,
 } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
@@ -162,51 +163,53 @@ module.exports = {
         return interaction.reply({ content: result.error, ephemeral: true });
       }
 
-      const resultEmbed = new EmbedBuilder()
-        .setTitle('📊 Shard Calculation Result')
-        .setColor(0x00ff00)
-        .addFields(
-          {
-            name: '📍 Current Status',
-            value: `${currentStars} Star - Grade ${currentGrade}`,
-            inline: true,
-          },
-          {
-            name: '🎯 Target Status',
-            value: `${targetStars} Star - Grade ${targetGrade}`,
-            inline: true,
-          },
-          {
-            name: '\u200b',
-            value: '\u200b',
-            inline: false,
-          },
-          {
-            name: '💎 Shards Required',
-            value: `**${result.shardsNeeded}** shards`,
-            inline: true,
-          },
-          {
-            name: '📈 Current Total',
-            value: `${result.currentShards} shards`,
-            inline: true,
-          },
-          {
-            name: '📊 Target Total',
-            value: `${result.targetShards} shards`,
-            inline: true,
-          }
-        );
-
-      // Add provider and date information to footer - test both formats
-      resultEmbed.setFooter({
-        text: `Provided by ${providedBy} - Last updated on ${lastUpdated}\nTest Discord timestamp: <t:${unixTimestamp}:D>`,
-      });
-
       // Clear user selections after calculation
       this.userSelections.delete(userId);
 
-      return interaction.reply({ embeds: [resultEmbed] });
+      // Create response using ComponentType.TextDisplay like talent tree
+      return interaction.reply({
+        flags: MessageFlags.IsComponentsV2,
+        allowedMentions: { parse: [] },
+        components: [
+          {
+            type: ComponentType.Container,
+            accent_color: 0x00ff00,
+            components: [
+              {
+                type: ComponentType.TextDisplay,
+                content: `**📊 Shard Calculation Result**`,
+              },
+              { type: ComponentType.Separator },
+              {
+                type: ComponentType.TextDisplay,
+                content: `📍 **Current Status**\n${currentStars} Star - Grade ${currentGrade}`,
+              },
+              {
+                type: ComponentType.TextDisplay,
+                content: `🎯 **Target Status**\n${targetStars} Star - Grade ${targetGrade}`,
+              },
+              { type: ComponentType.Separator },
+              {
+                type: ComponentType.TextDisplay,
+                content: `💎 **Shards Required**\n**${result.shardsNeeded}** shards`,
+              },
+              {
+                type: ComponentType.TextDisplay,
+                content: `📈 **Current Total**\n${result.currentShards} shards`,
+              },
+              {
+                type: ComponentType.TextDisplay,
+                content: `📊 **Target Total**\n${result.targetShards} shards`,
+              },
+              { type: ComponentType.Separator },
+              {
+                type: ComponentType.TextDisplay,
+                content: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`,
+              },
+            ],
+          },
+        ],
+      });
     }
   },
 
