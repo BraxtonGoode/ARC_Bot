@@ -1,4 +1,5 @@
 {
+    "Unlock": 10,
     "Grade 1": {
         "1/5": 1,
         "2/5": 1,
@@ -48,7 +49,7 @@
         "total": 440
     },
     "Max Shards": {
-        "total": 956
+        "total": 966
     },
     "providedBy": "Zephros",
     "lastUpdated": "2024-12-06"
