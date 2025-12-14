@@ -105,6 +105,14 @@ module.exports = {
     const userSelection = this.userSelections.get(userId);
     userSelection[interaction.customId] = interaction.values[0];
 
+    // Auto-select "Not applicable" for current_grade when "Character not unlocked" is selected
+    if (
+      interaction.customId === 'current_stars' &&
+      interaction.values[0] === '0'
+    ) {
+      userSelection.current_grade = '0';
+    }
+
     // Just acknowledge the selection without updating the message
     await interaction.deferUpdate();
   },
