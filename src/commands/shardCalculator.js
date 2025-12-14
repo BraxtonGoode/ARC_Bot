@@ -23,14 +23,17 @@ module.exports = {
       .setTitle('🧮 Character Shard Calculator')
       .setDescription(
         "Select your character's current and target status, then click Calculate.\n\n" +
-          '**Stars:** 1-6 (character star level)\n' +
-          '**Grades:** 1-5 (upgrade pieces within each star)\n\n' +
-          'Each character has 6 stars, and within each star there are 5 grades (pieces). ' +
-          "Select your character's current star level and grade, then choose what you want to reach."
+          '**Character Status:**\n' +
+          '- Not unlocked: Character needs to be unlocked first\n' +
+          '- 1-6 Stars: Character star level after unlock\n' +
+          '- Grades 1-5: Upgrade pieces within each star\n\n' +
+          'Each character requires 10 shards to unlock, then has 6 stars with 5 grades each. ' +
+          "Select your character's current status and choose what you want to reach."
       )
       .setColor(0x3498db);
 
     const starOptions = [
+      { label: 'Character not unlocked', value: '0', emoji: '🔒' },
       { label: '1 Star', value: '1', emoji: '⭐' },
       { label: '2 Stars', value: '2', emoji: '⭐' },
       { label: '3 Stars', value: '3', emoji: '⭐' },
@@ -40,6 +43,7 @@ module.exports = {
     ];
 
     const gradeOptions = [
+      { label: 'Not applicable', value: '0', emoji: '🚫' },
       { label: 'Grade 1', value: '1', emoji: '🔹' },
       { label: 'Grade 2', value: '2', emoji: '🔹' },
       { label: 'Grade 3', value: '3', emoji: '🔹' },
@@ -184,7 +188,11 @@ module.exports = {
               { type: ComponentType.Separator },
               {
                 type: ComponentType.TextDisplay,
-                content: `📍 **Current Status**\n${currentStars} Star - Grade ${currentGrade}`,
+                content: `📍 **Current Status**\n${
+                  currentStars === 0
+                    ? 'Character not unlocked'
+                    : `${currentStars} Star - Grade ${currentGrade}`
+                }`,
               },
               {
                 type: ComponentType.TextDisplay,
@@ -222,32 +230,33 @@ module.exports = {
     targetGrade,
     targetStars
   ) {
-    // Convert numbers to proper format strings
-    const gradeMap = {
-      1: 'Grade 1',
-      2: 'Grade 2',
-      3: 'Grade 3',
-      4: 'Grade 4',
-      5: 'Grade 5',
-      6: 'Grade 6',
-    };
-
-    const starMap = {
-      1: '1/5',
-      2: '2/5',
-      3: '3/5',
-      4: '4/5',
-      5: '5/5',
-    };
-
-    const currentGradeStr = gradeMap[currentGrade];
-    const currentStarsStr = starMap[currentStars];
-    const targetGradeStr = gradeMap[targetGrade];
-    const targetStarsStr = starMap[targetStars];
-
     // Helper function to get total shards for a specific grade/star combination
     function getTotalShards(grade, stars) {
-      let total = 0;
+      // Handle "Character not unlocked" case
+      if (grade === 0) return 0;
+
+      let total = shardsData.Unlock; // Add unlock cost
+
+      // Convert numbers to proper format strings
+      const gradeMap = {
+        1: 'Grade 1',
+        2: 'Grade 2',
+        3: 'Grade 3',
+        4: 'Grade 4',
+        5: 'Grade 5',
+        6: 'Grade 6',
+      };
+
+      const starMap = {
+        1: '1/5',
+        2: '2/5',
+        3: '3/5',
+        4: '4/5',
+        5: '5/5',
+      };
+
+      const gradeStr = gradeMap[grade];
+      const starsStr = starMap[stars];
 
       // Get grades in order
       const gradeOrder = [
@@ -258,7 +267,7 @@ module.exports = {
         'Grade 5',
         'Grade 6',
       ];
-      const currentGradeIndex = gradeOrder.indexOf(grade);
+      const currentGradeIndex = gradeOrder.indexOf(gradeStr);
 
       // Add all previous grades
       for (let i = 0; i < currentGradeIndex; i++) {
@@ -267,10 +276,10 @@ module.exports = {
 
       // Add current grade up to the star level
       const starOrder = ['1/5', '2/5', '3/5', '4/5', '5/5'];
-      const starIndex = starOrder.indexOf(stars);
+      const starIndex = starOrder.indexOf(starsStr);
 
       for (let i = 0; i <= starIndex; i++) {
-        total += shardsData[grade][starOrder[i]];
+        total += shardsData[gradeStr][starOrder[i]];
       }
 
       return total;
@@ -278,14 +287,22 @@ module.exports = {
 
     // Validate that target is higher than current
     if (
-      targetGrade < currentGrade ||
-      (targetGrade === currentGrade && targetStars <= currentStars)
+      currentGrade > 0 &&
+      (targetGrade < currentGrade ||
+        (targetGrade === currentGrade && targetStars <= currentStars))
     ) {
       return { error: '❌ Target must be higher than current status.' };
     }
 
-    const currentShards = getTotalShards(currentGradeStr, currentStarsStr);
-    const targetShards = getTotalShards(targetGradeStr, targetStarsStr);
+    // Special validation for unlocked characters
+    if (currentGrade === 0 && (targetGrade === 0 || targetGrade < 1)) {
+      return {
+        error: '❌ Please select a valid target for unlocking the character.',
+      };
+    }
+
+    const currentShards = getTotalShards(currentGrade, currentStars);
+    const targetShards = getTotalShards(targetGrade, targetStars);
     const shardsNeeded = targetShards - currentShards;
 
     return {
