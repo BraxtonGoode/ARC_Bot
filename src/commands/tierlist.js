@@ -60,7 +60,7 @@ module.exports = {
         );
       }
 
-      const { providedBy, lastUpdated } = JSON.parse(dataRaw);
+      const { providedBy, lastUpdated, info } = JSON.parse(dataRaw);
       const unixTimestamp = Math.floor(new Date(lastUpdated).getTime() / 1000);
 
       // look for an image in assets/tierlists named <choice>.webp (or png/jpg fallback)
@@ -99,6 +99,29 @@ module.exports = {
           .setURL(`attachment://${path.basename(imagePath)}`)
       );
 
+      const componentsArray = [
+        {
+          type: ComponentType.TextDisplay,
+          content: `**${formattedTierlistName} Tier List**`,
+        },
+        { type: ComponentType.Separator },
+        gallery,
+        { type: ComponentType.Separator },
+      ];
+
+      if (info && info.trim() !== '') {
+        componentsArray.push({
+          type: ComponentType.TextDisplay,
+          content: `> ${info}`,
+        });
+        componentsArray.push({ type: ComponentType.Separator });
+      }
+
+      componentsArray.push({
+        type: ComponentType.TextDisplay,
+        content: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`,
+      });
+
       return interaction.reply({
         flags: MessageFlags.IsComponentsV2,
         allowedMentions: { parse: [] },
@@ -107,19 +130,7 @@ module.exports = {
           {
             type: ComponentType.Container,
             accent_color: 0x3498db,
-            components: [
-              {
-                type: ComponentType.TextDisplay,
-                content: `**${formattedTierlistName} Tier List**`,
-              },
-              { type: ComponentType.Separator },
-              gallery,
-              { type: ComponentType.Separator },
-              {
-                type: ComponentType.TextDisplay,
-                content: `Provided by ${providedBy} - Last updated on <t:${unixTimestamp}:D>`,
-              },
-            ],
+            components: componentsArray,
           },
         ],
       });
