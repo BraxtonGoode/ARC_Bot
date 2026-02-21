@@ -4,6 +4,7 @@ const path = require('path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const config = require('./config');
 const logger = require('./utils/logger');
+const invasionManager = require('./utils/invasionManager');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -31,6 +32,11 @@ for (const file of eventFiles) {
 
 process.on('unhandledRejection', error => {
   logger.error(`Unhandled Promise Rejection: ${error.message}\n${error.stack}`);
+});
+
+// Initialize invasion manager when client is ready 
+client.once('ready', () => {
+  invasionManager.setClient(client);
 });
 
 client.login(config.token).catch(error => {

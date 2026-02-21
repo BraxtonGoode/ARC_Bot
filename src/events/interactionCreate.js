@@ -172,6 +172,21 @@ module.exports = {
             }
           }
         }
+      } else if (interaction.customId === 'invasion_modal') {
+        const command = client.commands.get('invasion');
+        if (command && command.handleModal) {
+          try {
+            await command.handleModal(interaction);
+          } catch (error) {
+            logger.error('Error handling invasion modal submit:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while scheduling the invasion reminder.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
       }
       return;
     }
