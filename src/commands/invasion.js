@@ -1,10 +1,10 @@
 const {
   SlashCommandBuilder,
   EmbedBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
   ActionRowBuilder,
+  StringSelectMenuBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   ComponentType,
   MessageFlags,
   PermissionFlagsBits,
@@ -29,48 +29,34 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      const modal = new ModalBuilder()
-        .setCustomId('invasion_modal')
-        .setTitle('Schedule Alliance Invasion');
+      // Show date selection menu
+      const dateOptions = this.generateDateOptions();
 
-      const timeInput = new TextInputBuilder()
-        .setCustomId('invasion_time')
-        .setLabel('Invasion Time (UTC)')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('Example: 2026-02-22 15:30 or 02/22/2026 3:30 PM')
-        .setRequired(true)
-        .setMinLength(10)
-        .setMaxLength(25);
+      const dateMenu = new StringSelectMenuBuilder()
+        .setCustomId('invasion_date_select')
+        .setPlaceholder('📅 Select invasion date')
+        .addOptions(dateOptions);
 
-      const descriptionInput = new TextInputBuilder()
-        .setCustomId('invasion_description')
-        .setLabel('Invasion Description (Optional)')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('Example: Main Alliance War vs. Fire Nation')
-        .setRequired(false)
-        .setMaxLength(100);
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
 
-      const reminderTimeInput = new TextInputBuilder()
-        .setCustomId('reminder_minutes')
-        .setLabel('Reminder Time (minutes before)')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('Example: 30 (will remind 30 minutes before)')
-        .setRequired(false)
-        .setValue('30')
-        .setMinLength(1)
-        .setMaxLength(4);
+      const dateRow = new ActionRowBuilder().addComponents(dateMenu);
+      const buttonRow = new ActionRowBuilder().addComponents(cancelButton);
 
-      const firstActionRow = new ActionRowBuilder().addComponents(timeInput);
-      const secondActionRow = new ActionRowBuilder().addComponents(
-        descriptionInput,
-      );
-      const thirdActionRow = new ActionRowBuilder().addComponents(
-        reminderTimeInput,
-      );
+      const embed = new EmbedBuilder()
+        .setTitle('🚨 Schedule Alliance Invasion')
+        .setDescription('Step 1/3: Select the date for your invasion')
+        .setColor(0x0099ff)
+        .setTimestamp();
 
-      modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
-
-      await interaction.showModal(modal);
+      await interaction.reply({
+        embeds: [embed],
+        components: [dateRow, buttonRow],
+        ephemeral: true,
+      });
     } catch (error) {
       console.error('/invasion command error:', error);
       return createErrorReply(
@@ -80,26 +66,224 @@ module.exports = {
     }
   },
 
-  async handleModal(interaction) {
-    try {
-      const timeInput = interaction.fields.getTextInputValue('invasion_time');
-      const description =
-        interaction.fields.getTextInputValue('invasion_description') ||
-        'Alliance Invasion';
-      const reminderMinutes =
-        parseInt(interaction.fields.getTextInputValue('reminder_minutes')) ||
-        30;
+  // Generate date options for the next 30 days
+  generateDateOptions() {
+    const options = [];
+    const today = new Date();
 
-      // Parse the time input
-      const invasionDate = this.parseDateTime(timeInput);
-      if (!invasionDate || invasionDate <= new Date()) {
-        return interaction.reply({
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+
+      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const displayDate = date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
+      let label = displayDate;
+      if (i === 0) label = `Today (${displayDate})`;
+      if (i === 1) label = `Tomorrow (${displayDate})`;
+
+      options.push({
+        label: label,
+        value: dateStr,
+        description: `${date.toLocaleDateString('en-US', { weekday: 'long' })}`,
+      });
+    }
+
+    return options;
+  },
+
+  // Generate time options (every hour, 24-hour format)
+  generateTimeOptions() {
+    const options = [];
+
+    for (let hour = 0; hour < 24; hour++) {
+      const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+      const displayTime = new Date(
+        `2000-01-01T${timeStr}:00Z`,
+      ).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC',
+      });
+
+      options.push({
+        label: `${timeStr} (${displayTime} UTC)`,
+        value: timeStr,
+        description: `${displayTime} UTC`,
+      });
+    }
+
+    return options;
+  },
+
+  // Handle date selection
+  async handleDateSelection(interaction) {
+    try {
+      const selectedDate = interaction.values[0];
+
+      const timeOptions = this.generateTimeOptions();
+      const timeMenu = new StringSelectMenuBuilder()
+        .setCustomId(`invasion_time_select:${selectedDate}`)
+        .setPlaceholder('🕐 Select invasion time (UTC)')
+        .addOptions(timeOptions);
+
+      const backButton = new ButtonBuilder()
+        .setCustomId('invasion_back_to_date')
+        .setLabel('← Back')
+        .setStyle(ButtonStyle.Secondary);
+
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+      const timeRow = new ActionRowBuilder().addComponents(timeMenu);
+      const buttonRow = new ActionRowBuilder().addComponents(
+        backButton,
+        cancelButton,
+      );
+
+      const selectedDateObj = new Date(selectedDate + 'T00:00:00Z');
+      const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle('🚨 Schedule Alliance Invasion')
+        .setDescription(
+          `Step 2/3: Select the time for your invasion\n\n📅 **Selected Date:** ${formattedDate}`,
+        )
+        .setColor(0x0099ff)
+        .setTimestamp();
+
+      await interaction.update({
+        embeds: [embed],
+        components: [timeRow, buttonRow],
+      });
+    } catch (error) {
+      console.error('Date selection error:', error);
+      return createErrorReply(interaction, 'Error processing date selection.');
+    }
+  },
+
+  // Handle time selection
+  async handleTimeSelection(interaction) {
+    try {
+      const [, selectedDate] = interaction.customId.split(':');
+      const selectedTime = interaction.values[0];
+
+      // Generate reminder options
+      const reminderOptions = [
+        {
+          label: '5 minutes before',
+          value: '5',
+          description: 'Quick reminder',
+        },
+        {
+          label: '15 minutes before',
+          value: '15',
+          description: 'Short notice',
+        },
+        {
+          label: '30 minutes before',
+          value: '30',
+          description: 'Standard reminder',
+        },
+        { label: '60 minutes before', value: '60', description: 'Long notice' },
+        {
+          label: '2 hours before',
+          value: '120',
+          description: 'Extra long notice',
+        },
+        {
+          label: 'No reminder',
+          value: '0',
+          description: 'Invasion notification only',
+        },
+      ];
+
+      const reminderMenu = new StringSelectMenuBuilder()
+        .setCustomId(`invasion_reminder_select:${selectedDate}:${selectedTime}`)
+        .setPlaceholder('⏰ Select reminder time')
+        .addOptions(reminderOptions);
+
+      const backButton = new ButtonBuilder()
+        .setCustomId('invasion_back_to_time')
+        .setLabel('← Back')
+        .setStyle(ButtonStyle.Secondary);
+
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+      const reminderRow = new ActionRowBuilder().addComponents(reminderMenu);
+      const buttonRow = new ActionRowBuilder().addComponents(
+        backButton,
+        cancelButton,
+      );
+
+      const selectedDateObj = new Date(
+        selectedDate + 'T' + selectedTime + ':00Z',
+      );
+      const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      const formattedTime = selectedDateObj.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC',
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle('🚨 Schedule Alliance Invasion')
+        .setDescription(
+          `Step 3/3: Select when to send the reminder\n\n📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC`,
+        )
+        .setColor(0x0099ff)
+        .setTimestamp();
+
+      await interaction.update({
+        embeds: [embed],
+        components: [reminderRow, buttonRow],
+      });
+    } catch (error) {
+      console.error('Time selection error:', error);
+      return createErrorReply(interaction, 'Error processing time selection.');
+    }
+  },
+
+  // Handle reminder selection and finalize invasion
+  async handleReminderSelection(interaction) {
+    try {
+      const [, selectedDate, selectedTime] = interaction.customId.split(':');
+      const reminderMinutes = parseInt(interaction.values[0]);
+
+      // Create the invasion date
+      const invasionDate = new Date(selectedDate + 'T' + selectedTime + ':00Z');
+
+      // Validate that the date is in the future
+      if (invasionDate <= new Date()) {
+        return interaction.update({
           content:
-            '❌ Invalid time format or time is in the past. Please use format like:\n' +
-            '- `2026-02-22 15:30` (24-hour format)\n' +
-            '- `02/22/2026 3:30 PM` (12-hour format)\n' +
-            '- Time must be in the future',
-          flags: MessageFlags.Ephemeral,
+            '❌ The selected time is in the past. Please start over and select a future time.',
+          embeds: [],
+          components: [],
         });
       }
 
@@ -120,7 +304,7 @@ module.exports = {
         scheduledBy: interaction.user.id,
         scheduledAt: new Date().toISOString(),
         invasionTime: invasionDate.toISOString(),
-        description: description,
+        description: 'Alliance Invasion', // Default description
         reminderMinutes: reminderMinutes,
         reminded: false,
         completed: false,
@@ -131,15 +315,9 @@ module.exports = {
       // Save to file
       fs.writeFileSync(INVASIONS_FILE, JSON.stringify(invasions, null, 2));
 
-      // Calculate reminder time
-      const reminderTime = new Date(
-        invasionDate.getTime() - reminderMinutes * 60 * 1000,
-      );
-      const now = new Date();
-
       const embed = new EmbedBuilder()
-        .setTitle('🚨 Invasion Scheduled Successfully!')
-        .setDescription(description)
+        .setTitle('✅ Invasion Scheduled Successfully!')
+        .setDescription('Your alliance invasion reminder has been set up!')
         .addFields(
           {
             name: '📅 Invasion Time (UTC)',
@@ -148,7 +326,10 @@ module.exports = {
           },
           {
             name: '⏰ Reminder',
-            value: `${reminderMinutes} minutes before invasion`,
+            value:
+              reminderMinutes > 0
+                ? `${reminderMinutes} minutes before invasion`
+                : 'No reminder (invasion notification only)',
             inline: true,
           },
           {
@@ -161,104 +342,58 @@ module.exports = {
         .setTimestamp()
         .setFooter({ text: `Invasion ID: ${invasion.id}` });
 
-      // Add countdown
-      if (reminderTime > now) {
-        embed.addFields({
-          name: '🔔 Reminder Time (UTC)',
-          value: `<t:${Math.floor(reminderTime.getTime() / 1000)}:F>`,
-          inline: false,
-        });
-      } else {
-        embed.addFields({
-          name: '⚠️ Note',
-          value:
-            'Reminder time has already passed - only invasion notification will be sent.',
-          inline: false,
-        });
+      // Add countdown for reminder if applicable
+      if (reminderMinutes > 0) {
+        const reminderTime = new Date(
+          invasionDate.getTime() - reminderMinutes * 60 * 1000,
+        );
+        if (reminderTime > new Date()) {
+          embed.addFields({
+            name: '🔔 Reminder Time (UTC)',
+            value: `<t:${Math.floor(reminderTime.getTime() / 1000)}:F>`,
+            inline: false,
+          });
+        }
       }
 
-      await interaction.reply({
+      await interaction.update({
         embeds: [embed],
+        components: [],
       });
 
-      // Schedule the reminders
+      // Schedule the invasion
       invasionManager.scheduleInvasion(invasion);
     } catch (error) {
-      console.error('Modal handling error:', error);
+      console.error('Reminder selection error:', error);
       return createErrorReply(
         interaction,
-        'Error while scheduling invasion reminder.',
+        'Error finalizing invasion schedule.',
       );
     }
   },
 
-  parseDateTime(input) {
-    const cleanInput = input.trim();
+  // Handle navigation buttons
+  async handleBackToDate(interaction) {
+    // Restart the process by showing date selection
+    await this.execute(interaction);
+  },
 
-    // Try various date formats
-    const formats = [
-      // ISO-like formats
-      /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/,
-      // MM/DD/YYYY formats
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?$/i,
-      // DD/MM/YYYY formats
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?$/i,
-    ];
+  async handleBackToTime(interaction) {
+    // Go back to time selection - need to extract the date from current state
+    // For now, restart the process
+    await this.execute(interaction);
+  },
 
-    for (let i = 0; i < formats.length; i++) {
-      const match = cleanInput.match(formats[i]);
-      if (match) {
-        let year,
-          month,
-          day,
-          hours,
-          minutes,
-          seconds = 0;
+  async handleCancel(interaction) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Invasion Scheduling Cancelled')
+      .setDescription('The invasion scheduling has been cancelled.')
+      .setColor(0xff0000)
+      .setTimestamp();
 
-        if (i === 0) {
-          // ISO format YYYY-MM-DD
-          [, year, month, day, hours, minutes, seconds] = match;
-          seconds = seconds || 0;
-        } else {
-          // MM/DD/YYYY or DD/MM/YYYY
-          let first, second;
-          [, first, second, year, hours, minutes] = match;
-
-          // Assume MM/DD/YYYY format (can be adjusted based on your region)
-          month = first;
-          day = second;
-
-          // Handle AM/PM
-          if (match[6]) {
-            const isPM = match[6].toUpperCase() === 'PM';
-            hours = parseInt(hours);
-            if (isPM && hours !== 12) hours += 12;
-            else if (!isPM && hours === 12) hours = 0;
-          }
-        }
-
-        const date = new Date(
-          Date.UTC(
-            parseInt(year),
-            parseInt(month) - 1, // months are 0-indexed
-            parseInt(day),
-            parseInt(hours),
-            parseInt(minutes),
-            parseInt(seconds),
-          ),
-        );
-
-        // Validate the date
-        if (
-          date.getUTCFullYear() == year &&
-          date.getUTCMonth() == month - 1 &&
-          date.getUTCDate() == day
-        ) {
-          return date;
-        }
-      }
-    }
-
-    return null;
+    await interaction.update({
+      embeds: [embed],
+      components: [],
+    });
   },
 };

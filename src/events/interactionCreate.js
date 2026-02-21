@@ -104,6 +104,28 @@ module.exports = {
             }
           }
         }
+      } else if (interaction.customId.startsWith('invasion_')) {
+        // Handle invasion-related buttons
+        const command = client.commands.get('invasion');
+        if (command) {
+          try {
+            if (interaction.customId === 'invasion_cancel') {
+              await command.handleCancel(interaction);
+            } else if (interaction.customId === 'invasion_back_to_date') {
+              await command.handleBackToDate(interaction);
+            } else if (interaction.customId === 'invasion_back_to_time') {
+              await command.handleBackToTime(interaction);
+            }
+          } catch (error) {
+            logger.error('Error handling invasion button:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
       }
       return;
     }
@@ -151,6 +173,32 @@ module.exports = {
             }
           }
         }
+      } else if (interaction.customId.startsWith('invasion_')) {
+        // Handle invasion-related select menus
+        const command = client.commands.get('invasion');
+        if (command) {
+          try {
+            if (interaction.customId === 'invasion_date_select') {
+              await command.handleDateSelection(interaction);
+            } else if (
+              interaction.customId.startsWith('invasion_time_select')
+            ) {
+              await command.handleTimeSelection(interaction);
+            } else if (
+              interaction.customId.startsWith('invasion_reminder_select')
+            ) {
+              await command.handleReminderSelection(interaction);
+            }
+          } catch (error) {
+            logger.error('Error handling invasion select menu:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
       }
       return;
     }
@@ -167,22 +215,6 @@ module.exports = {
             if (!interaction.replied) {
               await interaction.reply({
                 content: 'An error occurred while processing your request.',
-                ephemeral: true,
-              });
-            }
-          }
-        }
-      } else if (interaction.customId === 'invasion_modal') {
-        const command = client.commands.get('invasion');
-        if (command && command.handleModal) {
-          try {
-            await command.handleModal(interaction);
-          } catch (error) {
-            logger.error('Error handling invasion modal submit:', error);
-            if (!interaction.replied) {
-              await interaction.reply({
-                content:
-                  'An error occurred while scheduling the invasion reminder.',
                 ephemeral: true,
               });
             }
