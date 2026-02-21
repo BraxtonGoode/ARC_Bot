@@ -35,7 +35,7 @@ module.exports = {
         } catch (error) {
           console.error(
             `Error in autocomplete for /${command.data.name}:`,
-            error
+            error,
           );
         }
         return;
@@ -60,7 +60,7 @@ module.exports = {
           .filter(
             (choice) =>
               choice.name.toLowerCase().includes(focusedValue) ||
-              choice.value.toLowerCase().includes(focusedValue)
+              choice.value.toLowerCase().includes(focusedValue),
           )
           .slice(0, 25)
           .map((choice) => ({ name: choice.name, value: choice.value }));
@@ -134,7 +134,7 @@ module.exports = {
         }
       } else if (
         ['current_skill_level', 'target_skill_level'].includes(
-          interaction.customId
+          interaction.customId,
         )
       ) {
         const command = client.commands.get('skillcalculator');
@@ -181,7 +181,8 @@ module.exports = {
             logger.error('Error handling invasion modal submit:', error);
             if (!interaction.replied) {
               await interaction.reply({
-                content: 'An error occurred while scheduling the invasion reminder.',
+                content:
+                  'An error occurred while scheduling the invasion reminder.',
                 ephemeral: true,
               });
             }

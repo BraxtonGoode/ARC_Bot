@@ -61,33 +61,45 @@ module.exports = {
         .setMaxLength(4);
 
       const firstActionRow = new ActionRowBuilder().addComponents(timeInput);
-      const secondActionRow = new ActionRowBuilder().addComponents(descriptionInput);
-      const thirdActionRow = new ActionRowBuilder().addComponents(reminderTimeInput);
+      const secondActionRow = new ActionRowBuilder().addComponents(
+        descriptionInput,
+      );
+      const thirdActionRow = new ActionRowBuilder().addComponents(
+        reminderTimeInput,
+      );
 
       modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
 
       await interaction.showModal(modal);
     } catch (error) {
       console.error('/invasion command error:', error);
-      return createErrorReply(interaction, 'Error while opening invasion scheduler.');
+      return createErrorReply(
+        interaction,
+        'Error while opening invasion scheduler.',
+      );
     }
   },
 
   async handleModal(interaction) {
     try {
       const timeInput = interaction.fields.getTextInputValue('invasion_time');
-      const description = interaction.fields.getTextInputValue('invasion_description') || 'Alliance Invasion';
-      const reminderMinutes = parseInt(interaction.fields.getTextInputValue('reminder_minutes')) || 30;
+      const description =
+        interaction.fields.getTextInputValue('invasion_description') ||
+        'Alliance Invasion';
+      const reminderMinutes =
+        parseInt(interaction.fields.getTextInputValue('reminder_minutes')) ||
+        30;
 
       // Parse the time input
       const invasionDate = this.parseDateTime(timeInput);
       if (!invasionDate || invasionDate <= new Date()) {
         return interaction.reply({
-          content: '❌ Invalid time format or time is in the past. Please use format like:\n' +
-                  '- `2026-02-22 15:30` (24-hour format)\n' +
-                  '- `02/22/2026 3:30 PM` (12-hour format)\n' +
-                  '- Time must be in the future',
-          flags: MessageFlags.Ephemeral
+          content:
+            '❌ Invalid time format or time is in the past. Please use format like:\n' +
+            '- `2026-02-22 15:30` (24-hour format)\n' +
+            '- `02/22/2026 3:30 PM` (12-hour format)\n' +
+            '- Time must be in the future',
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -111,7 +123,7 @@ module.exports = {
         description: description,
         reminderMinutes: reminderMinutes,
         reminded: false,
-        completed: false
+        completed: false,
       };
 
       invasions.push(invasion);
@@ -120,7 +132,9 @@ module.exports = {
       fs.writeFileSync(INVASIONS_FILE, JSON.stringify(invasions, null, 2));
 
       // Calculate reminder time
-      const reminderTime = new Date(invasionDate.getTime() - (reminderMinutes * 60 * 1000));
+      const reminderTime = new Date(
+        invasionDate.getTime() - reminderMinutes * 60 * 1000,
+      );
       const now = new Date();
 
       const embed = new EmbedBuilder()
@@ -130,18 +144,18 @@ module.exports = {
           {
             name: '📅 Invasion Time (UTC)',
             value: `<t:${Math.floor(invasionDate.getTime() / 1000)}:F>`,
-            inline: false
+            inline: false,
           },
           {
             name: '⏰ Reminder',
             value: `${reminderMinutes} minutes before invasion`,
-            inline: true
+            inline: true,
           },
           {
             name: '👤 Scheduled By',
             value: `<@${interaction.user.id}>`,
-            inline: true
-          }
+            inline: true,
+          },
         )
         .setColor(0x00ff00)
         .setTimestamp()
@@ -152,32 +166,35 @@ module.exports = {
         embed.addFields({
           name: '🔔 Reminder Time (UTC)',
           value: `<t:${Math.floor(reminderTime.getTime() / 1000)}:F>`,
-          inline: false
+          inline: false,
         });
       } else {
         embed.addFields({
           name: '⚠️ Note',
-          value: 'Reminder time has already passed - only invasion notification will be sent.',
-          inline: false
+          value:
+            'Reminder time has already passed - only invasion notification will be sent.',
+          inline: false,
         });
       }
 
       await interaction.reply({
-        embeds: [embed]
+        embeds: [embed],
       });
 
       // Schedule the reminders
       invasionManager.scheduleInvasion(invasion);
-
     } catch (error) {
       console.error('Modal handling error:', error);
-      return createErrorReply(interaction, 'Error while scheduling invasion reminder.');
+      return createErrorReply(
+        interaction,
+        'Error while scheduling invasion reminder.',
+      );
     }
   },
 
   parseDateTime(input) {
     const cleanInput = input.trim();
-    
+
     // Try various date formats
     const formats = [
       // ISO-like formats
@@ -185,25 +202,32 @@ module.exports = {
       // MM/DD/YYYY formats
       /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?$/i,
       // DD/MM/YYYY formats
-      /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?$/i
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?$/i,
     ];
 
     for (let i = 0; i < formats.length; i++) {
       const match = cleanInput.match(formats[i]);
       if (match) {
-        let year, month, day, hours, minutes, seconds = 0;
+        let year,
+          month,
+          day,
+          hours,
+          minutes,
+          seconds = 0;
 
-        if (i === 0) { // ISO format YYYY-MM-DD
+        if (i === 0) {
+          // ISO format YYYY-MM-DD
           [, year, month, day, hours, minutes, seconds] = match;
           seconds = seconds || 0;
-        } else { // MM/DD/YYYY or DD/MM/YYYY
+        } else {
+          // MM/DD/YYYY or DD/MM/YYYY
           let first, second;
           [, first, second, year, hours, minutes] = match;
-          
+
           // Assume MM/DD/YYYY format (can be adjusted based on your region)
           month = first;
           day = second;
-          
+
           // Handle AM/PM
           if (match[6]) {
             const isPM = match[6].toUpperCase() === 'PM';
@@ -213,24 +237,28 @@ module.exports = {
           }
         }
 
-        const date = new Date(Date.UTC(
-          parseInt(year),
-          parseInt(month) - 1, // months are 0-indexed
-          parseInt(day),
-          parseInt(hours),
-          parseInt(minutes),
-          parseInt(seconds)
-        ));
+        const date = new Date(
+          Date.UTC(
+            parseInt(year),
+            parseInt(month) - 1, // months are 0-indexed
+            parseInt(day),
+            parseInt(hours),
+            parseInt(minutes),
+            parseInt(seconds),
+          ),
+        );
 
         // Validate the date
-        if (date.getUTCFullYear() == year && 
-            date.getUTCMonth() == month - 1 &&
-            date.getUTCDate() == day) {
+        if (
+          date.getUTCFullYear() == year &&
+          date.getUTCMonth() == month - 1 &&
+          date.getUTCDate() == day
+        ) {
           return date;
         }
       }
     }
 
     return null;
-  }
+  },
 };

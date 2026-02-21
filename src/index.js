@@ -7,20 +7,22 @@ const logger = require('./utils/logger');
 const invasionManager = require('./utils/invasionManager');
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [GatewayIntentBits.Guilds],
 });
 
 client.commands = new Collection();
 
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
+const commandFiles = fs
+  .readdirSync(commandsPath)
+  .filter((f) => f.endsWith('.js'));
 for (const file of commandFiles) {
   const command = require(path.join(commandsPath, file));
   client.commands.set(command.data.name, command);
 }
 
 const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(f => f.endsWith('.js'));
+const eventFiles = fs.readdirSync(eventsPath).filter((f) => f.endsWith('.js'));
 for (const file of eventFiles) {
   const event = require(path.join(eventsPath, file));
   if (event.once) {
@@ -30,15 +32,15 @@ for (const file of eventFiles) {
   }
 }
 
-process.on('unhandledRejection', error => {
+process.on('unhandledRejection', (error) => {
   logger.error(`Unhandled Promise Rejection: ${error.message}\n${error.stack}`);
 });
 
-// Initialize invasion manager when client is ready 
+// Initialize invasion manager when client is ready
 client.once('ready', () => {
   invasionManager.setClient(client);
 });
 
-client.login(config.token).catch(error => {
+client.login(config.token).catch((error) => {
   logger.error('Login error:', error);
 });
