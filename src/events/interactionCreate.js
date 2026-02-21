@@ -185,9 +185,9 @@ module.exports = {
             ) {
               await command.handleTimeSelection(interaction);
             } else if (
-              interaction.customId.startsWith('invasion_reminder_select')
+              interaction.customId.startsWith('invasion_duration_select')
             ) {
-              await command.handleReminderSelection(interaction);
+              await command.handleDurationSelection(interaction);
             }
           } catch (error) {
             logger.error('Error handling invasion select menu:', error);

@@ -8,24 +8,17 @@ const {
   ComponentType,
   MessageFlags,
   PermissionFlagsBits,
+  GuildScheduledEventPrivacyLevel,
+  GuildScheduledEventEntityType,
 } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
 const { createErrorReply } = require('../utils/helpers');
-const invasionManager = require('../utils/invasionManager');
-
-// Create invasion data file if it doesn't exist
-const INVASIONS_FILE = path.join(__dirname, '..', 'data', 'invasions.json');
-if (!fs.existsSync(INVASIONS_FILE)) {
-  fs.writeFileSync(INVASIONS_FILE, JSON.stringify([], null, 2));
-}
 
 module.exports = {
   name: 'invasion',
   data: new SlashCommandBuilder()
     .setName('invasion')
-    .setDescription('Schedule an alliance invasion reminder')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages), // Require manage messages permission
+    .setDescription('Schedule an alliance invasion using Discord Events')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents), // Require manage events permission
 
   async execute(interaction) {
     try {
@@ -66,12 +59,12 @@ module.exports = {
     }
   },
 
-  // Generate date options for the next 30 days
+  // Generate date options for the next 25 days (Discord limit)
   generateDateOptions() {
     const options = [];
     const today = new Date();
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 25; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 
@@ -182,40 +175,39 @@ module.exports = {
       const [, selectedDate] = interaction.customId.split(':');
       const selectedTime = interaction.values[0];
 
-      // Generate reminder options
-      const reminderOptions = [
+      // Generate duration options for the Discord event
+      const durationOptions = [
         {
-          label: '5 minutes before',
-          value: '5',
-          description: 'Quick reminder',
-        },
-        {
-          label: '15 minutes before',
-          value: '15',
-          description: 'Short notice',
-        },
-        {
-          label: '30 minutes before',
+          label: '30 minutes',
           value: '30',
-          description: 'Standard reminder',
+          description: 'Quick skirmish or rally',
         },
-        { label: '60 minutes before', value: '60', description: 'Long notice' },
         {
-          label: '2 hours before',
+          label: '1 hour',
+          value: '60',
+          description: 'Standard invasion duration',
+        },
+        {
+          label: '2 hours',
           value: '120',
-          description: 'Extra long notice',
+          description: 'Extended battle',
         },
         {
-          label: 'No reminder',
-          value: '0',
-          description: 'Invasion notification only',
+          label: '3 hours',
+          value: '180',
+          description: 'Long campaign',
+        },
+        {
+          label: '4 hours',
+          value: '240',
+          description: 'Major war event',
         },
       ];
 
-      const reminderMenu = new StringSelectMenuBuilder()
-        .setCustomId(`invasion_reminder_select:${selectedDate}:${selectedTime}`)
-        .setPlaceholder('⏰ Select reminder time')
-        .addOptions(reminderOptions);
+      const durationMenu = new StringSelectMenuBuilder()
+        .setCustomId(`invasion_duration_select:${selectedDate}:${selectedTime}`)
+        .setPlaceholder('⏱️ Select event duration')
+        .addOptions(durationOptions);
 
       const backButton = new ButtonBuilder()
         .setCustomId('invasion_back_to_time')
@@ -228,7 +220,7 @@ module.exports = {
         .setStyle(ButtonStyle.Secondary)
         .setEmoji('❌');
 
-      const reminderRow = new ActionRowBuilder().addComponents(reminderMenu);
+      const durationRow = new ActionRowBuilder().addComponents(durationMenu);
       const buttonRow = new ActionRowBuilder().addComponents(
         backButton,
         cancelButton,
@@ -253,14 +245,14 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('🚨 Schedule Alliance Invasion')
         .setDescription(
-          `Step 3/3: Select when to send the reminder\n\n📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC`,
+          `Step 3/3: Choose event duration\n\n📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC\n\n*This will create a Discord Event that appears in your server's Events tab*`,
         )
         .setColor(0x0099ff)
         .setTimestamp();
 
       await interaction.update({
         embeds: [embed],
-        components: [reminderRow, buttonRow],
+        components: [durationRow, buttonRow],
       });
     } catch (error) {
       console.error('Time selection error:', error);
@@ -268,17 +260,22 @@ module.exports = {
     }
   },
 
-  // Handle reminder selection and finalize invasion
-  async handleReminderSelection(interaction) {
+  // Handle duration selection and create Discord event
+  async handleDurationSelection(interaction) {
     try {
       const [, selectedDate, selectedTime] = interaction.customId.split(':');
-      const reminderMinutes = parseInt(interaction.values[0]);
+      const durationMinutes = parseInt(interaction.values[0]);
 
-      // Create the invasion date
-      const invasionDate = new Date(selectedDate + 'T' + selectedTime + ':00Z');
+      // Create the invasion start date
+      const startDate = new Date(selectedDate + 'T' + selectedTime + ':00Z');
+
+      // Calculate end date
+      const endDate = new Date(
+        startDate.getTime() + durationMinutes * 60 * 1000,
+      );
 
       // Validate that the date is in the future
-      if (invasionDate <= new Date()) {
+      if (startDate <= new Date()) {
         return interaction.update({
           content:
             '❌ The selected time is in the past. Please start over and select a future time.',
@@ -287,84 +284,109 @@ module.exports = {
         });
       }
 
-      // Load existing invasions
-      let invasions = [];
+      // Create Discord Scheduled Event
       try {
-        const data = fs.readFileSync(INVASIONS_FILE, 'utf8');
-        invasions = JSON.parse(data);
-      } catch (error) {
-        console.error('Error reading invasions file:', error);
-      }
-
-      // Create new invasion entry
-      const invasion = {
-        id: Date.now().toString(),
-        guildId: interaction.guildId,
-        channelId: interaction.channelId,
-        scheduledBy: interaction.user.id,
-        scheduledAt: new Date().toISOString(),
-        invasionTime: invasionDate.toISOString(),
-        description: 'Alliance Invasion', // Default description
-        reminderMinutes: reminderMinutes,
-        reminded: false,
-        completed: false,
-      };
-
-      invasions.push(invasion);
-
-      // Save to file
-      fs.writeFileSync(INVASIONS_FILE, JSON.stringify(invasions, null, 2));
-
-      const embed = new EmbedBuilder()
-        .setTitle('✅ Invasion Scheduled Successfully!')
-        .setDescription('Your alliance invasion reminder has been set up!')
-        .addFields(
-          {
-            name: '📅 Invasion Time (UTC)',
-            value: `<t:${Math.floor(invasionDate.getTime() / 1000)}:F>`,
-            inline: false,
+        const scheduledEvent = await interaction.guild.scheduledEvents.create({
+          name: '⚔️ Alliance Invasion',
+          scheduledStartTime: startDate,
+          scheduledEndTime: endDate,
+          privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+          entityType: GuildScheduledEventEntityType.External,
+          entityMetadata: {
+            location: 'Alliance Territory - Game World',
           },
-          {
-            name: '⏰ Reminder',
-            value:
-              reminderMinutes > 0
-                ? `${reminderMinutes} minutes before invasion`
-                : 'No reminder (invasion notification only)',
-            inline: true,
-          },
-          {
-            name: '👤 Scheduled By',
-            value: `<@${interaction.user.id}>`,
-            inline: true,
-          },
-        )
-        .setColor(0x00ff00)
-        .setTimestamp()
-        .setFooter({ text: `Invasion ID: ${invasion.id}` });
+          description: `🚨 **Alliance Invasion Event**
 
-      // Add countdown for reminder if applicable
-      if (reminderMinutes > 0) {
-        const reminderTime = new Date(
-          invasionDate.getTime() - reminderMinutes * 60 * 1000,
-        );
-        if (reminderTime > new Date()) {
-          embed.addFields({
-            name: '🔔 Reminder Time (UTC)',
-            value: `<t:${Math.floor(reminderTime.getTime() / 1000)}:F>`,
-            inline: false,
+📅 **Date:** ${startDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+🕐 **Time:** ${startDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'UTC',
+          })} UTC
+⏱️ **Duration:** ${durationMinutes} minutes
+
+🎯 **What to do:**
+• Gather your alliance members
+• Prepare your battle strategies  
+• Coordinate attacks and defenses
+• Fight for glory and resources!
+
+👥 **Scheduled by:** <@${interaction.user.id}>
+
+*Click "Interested" to get notified when the invasion starts!*`,
+          reason: `Alliance invasion scheduled by ${interaction.user.tag}`,
+        });
+
+        const embed = new EmbedBuilder()
+          .setTitle('✅ Discord Event Created Successfully!')
+          .setDescription(
+            `🎉 Your alliance invasion has been scheduled as a Discord Event!\n\n**Event Details:**`,
+          )
+          .addFields(
+            {
+              name: '📅 Start Time (UTC)',
+              value: `<t:${Math.floor(startDate.getTime() / 1000)}:F>`,
+              inline: false,
+            },
+            {
+              name: '⏱️ Duration',
+              value: `${durationMinutes} minutes`,
+              inline: true,
+            },
+            {
+              name: '🏁 End Time (UTC)',
+              value: `<t:${Math.floor(endDate.getTime() / 1000)}:F>`,
+              inline: true,
+            },
+            {
+              name: '🔗 Event Link',
+              value: `[View Event](https://discord.com/events/${interaction.guildId}/${scheduledEvent.id})`,
+              inline: false,
+            },
+            {
+              name: '👤 Scheduled By',
+              value: `<@${interaction.user.id}>`,
+              inline: true,
+            },
+          )
+          .setColor(0x00ff00)
+          .setTimestamp()
+          .setFooter({
+            text: 'Users can click "Interested" on the event to get notified!',
+          });
+
+        await interaction.update({
+          embeds: [embed],
+          components: [],
+        });
+      } catch (eventError) {
+        console.error('Error creating scheduled event:', eventError);
+
+        // Check if it's a permissions error
+        if (eventError.code === 50013) {
+          return interaction.update({
+            content:
+              '❌ **Permission Error**: I need the "Manage Events" permission to create Discord events. Please ask a server admin to give me this permission.',
+            embeds: [],
+            components: [],
           });
         }
+
+        return interaction.update({
+          content:
+            '❌ **Error**: Failed to create Discord event. Please try again or contact an administrator.',
+          embeds: [],
+          components: [],
+        });
       }
-
-      await interaction.update({
-        embeds: [embed],
-        components: [],
-      });
-
-      // Schedule the invasion
-      invasionManager.scheduleInvasion(invasion);
     } catch (error) {
-      console.error('Reminder selection error:', error);
+      console.error('Duration selection error:', error);
       return createErrorReply(
         interaction,
         'Error finalizing invasion schedule.',
