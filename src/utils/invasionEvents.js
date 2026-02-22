@@ -28,20 +28,7 @@ class InvasionEvents {
       'events',
     );
 
-    // 1. Try Discord native recurring events first
-    const recurringResult = await this.tryCreateRecurringEvent(
-      guild,
-      eventDates,
-      durationMinutes,
-      eventName,
-    );
-
-    if (recurringResult.success) {
-      console.log('DEBUG - Successfully created recurring event series');
-      return recurringResult;
-    }
-
-    // 2. Try creating event series with individual events that reference each other
+    // 1. Try creating event series with individual events that reference each other FIRST
     const seriesResult = await this.tryCreateEventSeries(
       guild,
       eventDates,
@@ -52,6 +39,19 @@ class InvasionEvents {
     if (seriesResult.success) {
       console.log('DEBUG - Successfully created linked event series');
       return seriesResult;
+    }
+
+    // 2. Try Discord native recurring events as backup (only for very consistent patterns)
+    const recurringResult = await this.tryCreateRecurringEvent(
+      guild,
+      eventDates,
+      durationMinutes,
+      eventName,
+    );
+
+    if (recurringResult.success) {
+      console.log('DEBUG - Successfully created recurring event series');
+      return recurringResult;
     }
 
     // 3. Fall back to single event with multiple sessions
@@ -250,6 +250,7 @@ class InvasionEvents {
   }
 
   // Try to create a series of individual events that reference each other
+  // This method works with ANY date arrangement - no frequency rules required!
   static async tryCreateEventSeries(
     guild,
     eventDates,
@@ -341,10 +342,9 @@ class InvasionEvents {
         }
       }
 
-      // If we created most events successfully, consider it a success
-      const successRate = createdEvents.length / totalEvents;
-      if (successRate >= 0.8) {
-        // 80% success rate threshold
+      // If we created at least one event successfully, consider it a success
+      // (Individual event series is more flexible than all-or-nothing)
+      if (createdEvents.length > 0) {
         console.log(
           `DEBUG - Event series created successfully: ${createdEvents.length}/${totalEvents} events`,
         );
@@ -360,23 +360,8 @@ class InvasionEvents {
         };
       } else {
         console.log(
-          `DEBUG - Event series creation failed: only ${createdEvents.length}/${totalEvents} events created`,
+          `DEBUG - Event series creation failed: no events were created`,
         );
-
-        // Clean up any events that were created
-        for (const event of createdEvents) {
-          try {
-            const discordEvent = await guild.scheduledEvents.fetch(event.id);
-            await discordEvent.delete();
-            console.log(`DEBUG - Cleaned up event: ${event.id}`);
-          } catch (cleanupError) {
-            console.error(
-              `DEBUG - Failed to cleanup event ${event.id}:`,
-              cleanupError.message,
-            );
-          }
-        }
-
         return { success: false };
       }
     } catch (error) {
