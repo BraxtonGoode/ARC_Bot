@@ -400,8 +400,13 @@ class InvasionHandlers {
   // Handle description selection and create Discord events
   static async handleDescriptionSelection(interaction) {
     try {
-      const [, selectedDate, selectedTime, durationMinutes, repetitionValue] =
-        interaction.customId.split(':');
+      const parts = interaction.customId.split(':');
+      const selectedDate = parts[1];
+      const selectedTime = parts[2];
+      const durationMinutes = parts[3];
+      // Rejoin the remaining parts to get full repetition value (handles internal colons)
+      const repetitionValue = parts.slice(4).join(':');
+
       let eventName = interaction.values[0];
 
       // If custom selected, show modal for custom name
@@ -447,8 +452,13 @@ class InvasionHandlers {
   // Handle custom name modal
   static async handleCustomNameModal(interaction) {
     try {
-      const [, selectedDate, selectedTime, durationMinutes, repetitionValue] =
-        interaction.customId.split(':');
+      const parts = interaction.customId.split(':');
+      const selectedDate = parts[1];
+      const selectedTime = parts[2];
+      const durationMinutes = parts[3];
+      // Rejoin the remaining parts to get full repetition value (handles internal colons)
+      const repetitionValue = parts.slice(4).join(':');
+
       const eventName = interaction.fields.getTextInputValue('event_name');
 
       await this.createInvasionEvents(
