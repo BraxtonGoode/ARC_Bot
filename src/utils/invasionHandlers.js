@@ -66,16 +66,11 @@ class InvasionHandlers {
       const timeMatch = timeInput.match(timeRegex);
 
       if (!timeMatch) {
-        await interaction.reply({
+        return interaction.reply({
           content:
-            '❌ Invalid time format. Please use HH:MM format (e.g., 14:25, 09:00)\nPlease try again.',
+            '❌ Invalid time format. Please use HH:MM format (e.g., 14:25, 09:00)\n\n**Please run `/invasion` again to restart the process.**',
           ephemeral: true,
         });
-        // Show the modal again for retry
-        setTimeout(() => {
-          this.showTimeModal(interaction, selectedDate);
-        }, 1000);
-        return;
       }
 
       const selectedTime = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
@@ -95,15 +90,10 @@ class InvasionHandlers {
 
         if (selectedDateTime <= bufferTime) {
           const currentUTC = currentTime.toISOString().substring(11, 16);
-          await interaction.reply({
-            content: `❌ Selected time (${selectedTime}) is in the past or too close to current UTC time (${currentUTC}).\nPlease select a time at least 5 minutes in the future.`,
+          return interaction.reply({
+            content: `❌ Selected time (${selectedTime}) is in the past or too close to current UTC time (${currentUTC}).\nPlease select a time at least 5 minutes in the future.\n\n**Please run \`/invasion\` again to restart the process.**`,
             ephemeral: true,
           });
-          // Show the modal again for retry
-          setTimeout(() => {
-            this.showTimeModal(interaction, selectedDate);
-          }, 1000);
-          return;
         }
       }
 
@@ -116,7 +106,12 @@ class InvasionHandlers {
   }
 
   // Show duration selection
-  static async showDurationSelection(interaction, selectedDate, selectedTime) {
+  static async showDurationSelection(
+    interaction,
+    selectedDate,
+    selectedTime,
+    isUpdate = false,
+  ) {
     try {
       // Generate duration options for the Discord event
       const durationOptions = [
@@ -190,10 +185,17 @@ class InvasionHandlers {
         `📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC`,
       );
 
-      await interaction.reply({
-        embeds: [embed],
-        components: [durationRow, buttonRow],
-      });
+      if (isUpdate) {
+        await interaction.update({
+          embeds: [embed],
+          components: [durationRow, buttonRow],
+        });
+      } else {
+        await interaction.reply({
+          embeds: [embed],
+          components: [durationRow, buttonRow],
+        });
+      }
     } catch (error) {
       console.error('Duration selection error:', error);
       return createErrorReply(interaction, 'Error showing duration selection.');
@@ -633,8 +635,50 @@ class InvasionHandlers {
 
       const selectedDate = parts[1];
 
-      // Show the time selection modal again
-      return this.showTimeModal(interaction, selectedDate);
+      // Get current UTC time for display
+      const now = new Date();
+      const currentUTCTime = now.toISOString().substring(11, 16);
+
+      const embed = InvasionUtils.createStepEmbed(
+        3,
+        5,
+        'Time Selection',
+        `📅 **Selected Date:** ${new Date(selectedDate).toLocaleDateString(
+          'en-US',
+          {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+          },
+        )}\n\n🕐 **Current UTC Time:** ${currentUTCTime}\n\n**To change the time, please run \`/invasion\` again and select the date to get the time input modal.**`,
+      );
+
+      const backButton = new ButtonBuilder()
+        .setCustomId('invasion_back_to_date')
+        .setLabel('← Back to Date')
+        .setStyle(ButtonStyle.Secondary);
+
+      const restartButton = new ButtonBuilder()
+        .setCustomId('invasion_restart')
+        .setLabel('🔄 Restart')
+        .setStyle(ButtonStyle.Primary);
+
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+      const buttonRow = new ActionRowBuilder().addComponents(
+        backButton,
+        restartButton,
+        cancelButton,
+      );
+
+      await interaction.update({
+        embeds: [embed],
+        components: [buttonRow],
+      });
     } catch (error) {
       console.error('Back to time error:', error);
       return createErrorReply(
@@ -650,6 +694,202 @@ class InvasionHandlers {
       embeds: [],
       components: [],
     });
+  }
+
+  static async handleRestart(interaction) {
+    // Show the initial date selection menu
+    const dateOptions = InvasionUtils.generateDateOptions();
+
+    const dateMenu = new StringSelectMenuBuilder()
+      .setCustomId('invasion_date_select')
+      .setPlaceholder('📅 Select invasion date')
+      .addOptions(dateOptions);
+
+    const cancelButton = new ButtonBuilder()
+      .setCustomId('invasion_cancel')
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('❌');
+
+    const dateRow = new ActionRowBuilder().addComponents(dateMenu);
+    const buttonRow = new ActionRowBuilder().addComponents(cancelButton);
+
+    const embed = InvasionUtils.createStepEmbed(
+      2,
+      5,
+      'Select Date',
+      'Choose when you want this invasion event to occur.',
+    );
+
+    await interaction.update({
+      embeds: [embed],
+      components: [dateRow, buttonRow],
+    });
+  }
+
+  static async handleBackToDuration(interaction) {
+    try {
+      const customId = interaction.customId;
+      const parts = customId.split(':');
+
+      if (parts.length < 3) {
+        return createErrorReply(interaction, 'Invalid navigation data.');
+      }
+
+      const selectedDate = parts[1];
+      const selectedTime = parts[2];
+
+      // Show duration selection again
+      return this.showDurationSelection(
+        interaction,
+        selectedDate,
+        selectedTime,
+        true,
+      );
+    } catch (error) {
+      console.error('Back to duration error:', error);
+      return createErrorReply(
+        interaction,
+        'Error navigating back to duration selection.',
+      );
+    }
+  }
+
+  static async handleBackToRepetition(interaction) {
+    try {
+      const customId = interaction.customId;
+      const parts = customId.split(':');
+
+      if (parts.length < 4) {
+        return createErrorReply(interaction, 'Invalid navigation data.');
+      }
+
+      const selectedDate = parts[1];
+      const selectedTime = parts[2];
+      const durationMinutes = parseInt(parts[3]);
+
+      // Show repetition selection again
+      return this.showRepetitionSelection(
+        interaction,
+        selectedDate,
+        selectedTime,
+        durationMinutes,
+      );
+    } catch (error) {
+      console.error('Back to repetition error:', error);
+      return createErrorReply(
+        interaction,
+        'Error navigating back to repetition selection.',
+      );
+    }
+  }
+
+  // Show repetition selection menu
+  static async showRepetitionSelection(
+    interaction,
+    selectedDate,
+    selectedTime,
+    durationMinutes,
+  ) {
+    try {
+      const repetitionOptions = [
+        {
+          label: '📅 Once',
+          value: 'once',
+          description: 'Single invasion event',
+        },
+        {
+          label: '🔄 Every 2 days (3 events)',
+          value: 'days:2:3',
+          description: 'Every other day, 3 total events',
+        },
+        {
+          label: '🔄 Daily for 7 days',
+          value: 'daily:7',
+          description: 'Repeat every day for 1 week',
+        },
+        {
+          label: '🔄 Weekly (3 events)',
+          value: 'days:7:3',
+          description: 'Same time each week, 3 total events',
+        },
+        {
+          label: '🔄 Bi-weekly (4 events)',
+          value: 'days:14:4',
+          description: 'Every 2 weeks, 4 total events',
+        },
+        {
+          label: '🔄 Monthly (2 events)',
+          value: 'days:30:2',
+          description: 'Same time each month, 2 total events',
+        },
+      ];
+
+      const repetitionMenu = new StringSelectMenuBuilder()
+        .setCustomId(
+          `invasion_repetition_select:${selectedDate}:${selectedTime}:${durationMinutes}`,
+        )
+        .setPlaceholder('🔄 Select repetition pattern')
+        .addOptions(repetitionOptions);
+
+      const backButton = new ButtonBuilder()
+        .setCustomId(
+          `invasion_back_to_duration:${selectedDate}:${selectedTime}`,
+        )
+        .setLabel('← Back')
+        .setStyle(ButtonStyle.Secondary);
+
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+      const repetitionRow = new ActionRowBuilder().addComponents(
+        repetitionMenu,
+      );
+      const buttonRow = new ActionRowBuilder().addComponents(
+        backButton,
+        cancelButton,
+      );
+
+      const selectedDateObj = new Date(
+        selectedDate + 'T' + selectedTime + ':00Z',
+      );
+      const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      });
+      const formattedTime = selectedDateObj.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+
+      const durationText =
+        durationMinutes >= 60
+          ? `${Math.floor(durationMinutes / 60)} hour${Math.floor(durationMinutes / 60) !== 1 ? 's' : ''}`
+          : `${durationMinutes} minutes`;
+
+      const embed = InvasionUtils.createStepEmbed(
+        4,
+        5,
+        'Select Repetition',
+        `📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC\n⏱️ **Duration:** ${durationText}`,
+      );
+
+      await interaction.update({
+        embeds: [embed],
+        components: [repetitionRow, buttonRow],
+      });
+    } catch (error) {
+      console.error('Repetition selection error:', error);
+      return createErrorReply(
+        interaction,
+        'Error showing repetition selection.',
+      );
+    }
   }
 }
 

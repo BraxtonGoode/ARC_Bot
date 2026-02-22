@@ -113,8 +113,18 @@ module.exports = {
             await InvasionHandlers.handleCancel(interaction);
           } else if (interaction.customId === 'invasion_back_to_date') {
             await InvasionHandlers.handleBackToDate(interaction);
-          } else if (interaction.customId === 'invasion_back_to_time') {
+          } else if (interaction.customId.startsWith('invasion_back_to_time')) {
             await InvasionHandlers.handleBackToTime(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_back_to_duration')
+          ) {
+            await InvasionHandlers.handleBackToDuration(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_back_to_repetition')
+          ) {
+            await InvasionHandlers.handleBackToRepetition(interaction);
+          } else if (interaction.customId === 'invasion_restart') {
+            await InvasionHandlers.handleRestart(interaction);
           }
         } catch (error) {
           logger.error('Error handling invasion button:', error);
