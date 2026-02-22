@@ -615,13 +615,16 @@ class InvasionHandlers {
       // Validate guild access
       let guild = interaction.guild;
       console.log('DEBUG - Guild from interaction:', guild ? guild.id : 'null');
-      
+
       if (!guild) {
         // Try to get guild from client if missing
         if (interaction.guildId && interaction.client) {
           try {
             guild = await interaction.client.guilds.fetch(interaction.guildId);
-            console.log('DEBUG - Guild fetched from client:', guild ? guild.id : 'still null');
+            console.log(
+              'DEBUG - Guild fetched from client:',
+              guild ? guild.id : 'still null',
+            );
           } catch (fetchError) {
             console.error('DEBUG - Failed to fetch guild:', fetchError.message);
           }
@@ -630,16 +633,20 @@ class InvasionHandlers {
 
       if (!guild) {
         return interaction.followUp({
-          content: '❌ Unable to access server information. Please make sure the bot has proper permissions and try again.',
+          content:
+            '❌ Unable to access server information. Please make sure the bot has proper permissions and try again.',
           ephemeral: true,
         });
       }
 
       // Check bot permissions for managing events
-      const botMember = guild.members.me || await guild.members.fetch(interaction.client.user.id);
+      const botMember =
+        guild.members.me ||
+        (await guild.members.fetch(interaction.client.user.id));
       if (!botMember.permissions.has('ManageEvents')) {
         return interaction.followUp({
-          content: '❌ I need the "Manage Events" permission to create scheduled events. Please ask an admin to grant this permission.',
+          content:
+            '❌ I need the "Manage Events" permission to create scheduled events. Please ask an admin to grant this permission.',
           ephemeral: true,
         });
       }
