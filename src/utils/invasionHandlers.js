@@ -167,29 +167,14 @@ class InvasionHandlers {
           description: 'Single invasion event',
         },
         {
-          label: '🔄 Daily for 3 days',
-          value: 'daily:3',
-          description: 'Repeat every day for 3 days',
-        },
-        {
-          label: '🔄 Daily for 5 days',
-          value: 'daily:5',
-          description: 'Repeat every day for 5 days',
-        },
-        {
-          label: '🔄 Daily for 7 days',
-          value: 'daily:7',
-          description: 'Repeat every day for 1 week',
-        },
-        {
           label: '🔄 Every 2 days (3 events)',
           value: 'days:2:3',
           description: 'Every other day, 3 total events',
         },
         {
-          label: '🔄 Every 3 days (3 events)',
-          value: 'days:3:3',
-          description: 'Every 3rd day, 3 total events',
+          label: '🔄 Daily for 7 days',
+          value: 'daily:7',
+          description: 'Repeat every day for 1 week',
         },
         {
           label: '🔄 Weekly (3 events)',
@@ -201,6 +186,11 @@ class InvasionHandlers {
           value: 'days:14:4',
           description: 'Every 2 weeks, 4 total events',
         },
+        {
+          label: '🔄 Monthly (2 events)',
+          value: 'days:30:2',
+          description: 'Same time each month, 2 total events',
+        }
       ];
 
       const repetitionMenu = new StringSelectMenuBuilder()
@@ -284,35 +274,16 @@ class InvasionHandlers {
           description: 'Standard alliance invasion event',
         },
         {
-          label: '🛡️ Defense Rally',
-          value: 'Defense Rally',
-          description: 'Defensive preparation event',
+            label: '🏯 Temple War',
+            value: 'Temple War',
+            description: 'Temple War event',
         },
         {
-          label: '🌊 Territory Conquest',
-          value: 'Territory Conquest',
-          description: 'Territory expansion event',
+            label: ' Murong\'s Grand Melee (MGM)',
+            value: 'Murong\'s Grand Melee',
+            description: 'Murong\'s Grand Melee event',
         },
-        {
-          label: '🔥 War Campaign',
-          value: 'War Campaign',
-          description: 'Major war operation',
-        },
-        {
-          label: '⚡ Raid Party',
-          value: 'Raid Party',
-          description: 'Quick raid mission',
-        },
-        {
-          label: '🏰 Siege Operations',
-          value: 'Siege Operations',
-          description: 'Castle siege event',
-        },
-        {
-          label: '🎯 Strategic Strike',
-          value: 'Strategic Strike',
-          description: 'Coordinated attack mission',
-        },
+
         {
           label: '✨ Custom Name',
           value: 'custom',
