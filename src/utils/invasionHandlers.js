@@ -489,6 +489,14 @@ class InvasionHandlers {
         return await interaction.showModal(modal);
       }
 
+      // Show status message before creating events
+      await interaction.update({
+        content:
+          '⏳ **Creating invasion events...** \nThis may take a moment for each event to be created.',
+        embeds: [],
+        components: [],
+      });
+
       await this.createInvasionEvents(
         interaction,
         selectedDate,
@@ -524,6 +532,13 @@ class InvasionHandlers {
       console.log('  repetitionValue:', repetitionValue);
 
       const eventName = interaction.fields.getTextInputValue('event_name');
+
+      // Show status message before creating events
+      await interaction.reply({
+        content:
+          '⏳ **Creating invasion events...** \nThis may take a moment for each event to be created.',
+        ephemeral: false,
+      });
 
       await this.createInvasionEvents(
         interaction,
