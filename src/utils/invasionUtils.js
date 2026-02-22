@@ -10,7 +10,7 @@ class InvasionUtils {
     const options = [];
     const today = new Date();
 
-    for (let i = 1; i <= 25; i++) {
+    for (let i = 0; i <= 24; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
 
@@ -21,8 +21,16 @@ class InvasionUtils {
         day: 'numeric',
       });
 
+      // Add special labels for today and tomorrow
+      let label = `📅 ${displayDate}`;
+      if (i === 0) {
+        label = `📅 Today (${displayDate})`;
+      } else if (i === 1) {
+        label = `📅 Tomorrow (${displayDate})`;
+      }
+
       options.push({
-        label: `📅 ${displayDate}`,
+        label: label,
         value: dateString,
         description: `${date.toLocaleDateString('en-US', {
           weekday: 'long',
