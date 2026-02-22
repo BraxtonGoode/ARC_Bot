@@ -61,7 +61,7 @@ class InvasionEvents {
           privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
           entityType: GuildScheduledEventEntityType.External,
           entityMetadata: {
-            location: 'Avatar: Generations Game',
+            location: 'Avatar Realms Collide',
           },
         });
 
