@@ -24,7 +24,7 @@ module.exports = {
 - /invasion - Schedule an alliance invasion event.
 - /invasions - List all scheduled invasion events.\n
 **Invasion Events:**
-Use \`/invasion\` to create Discord Events for your alliance invasions. These appear in your server's Events tab, send native Discord notifications, and integrate perfectly with Discord's calendar system. Members can mark themselves as "Interested" to get notified! You can also create repeating events (daily, every 2-3 days, weekly, etc.) for regular invasion schedules.\n
+Use \`/invasion\` to create Discord Events for your alliance invasions. These appear in your server's Events tab, send native Discord notifications, and integrate perfectly with Discord's calendar system. Members can mark themselves as "Interested" to get notified! You can also create repeating events (daily, every 2-3 days, weekly, etc.) for regular invasion schedules, and customize event names like "Territory Defense", "Resource Raid", "City Siege", etc.\n
 **Calculators:**  
 The shard calculator helps you determine how many character shards you need to upgrade from your current star/grade to your target level.
 The skill calculator shows how many skill shards are required to upgrade skills from level 1-18.\n

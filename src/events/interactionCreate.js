@@ -192,6 +192,10 @@ module.exports = {
               interaction.customId.startsWith('invasion_repetition_select')
             ) {
               await command.handleRepetitionSelection(interaction);
+            } else if (
+              interaction.customId.startsWith('invasion_description_select')
+            ) {
+              await command.handleDescriptionSelection(interaction);
             }
           } catch (error) {
             logger.error('Error handling invasion select menu:', error);
@@ -219,6 +223,22 @@ module.exports = {
             if (!interaction.replied) {
               await interaction.reply({
                 content: 'An error occurred while processing your request.',
+                ephemeral: true,
+              });
+            }
+          }
+        }
+      } else if (interaction.customId.startsWith('invasion_custom_name')) {
+        const command = client.commands.get('invasion');
+        if (command && command.handleCustomNameModal) {
+          try {
+            await command.handleCustomNameModal(interaction);
+          } catch (error) {
+            logger.error('Error handling invasion custom name modal:', error);
+            if (!interaction.replied) {
+              await interaction.reply({
+                content:
+                  'An error occurred while processing your custom event name.',
                 ephemeral: true,
               });
             }

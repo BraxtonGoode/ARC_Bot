@@ -10,6 +10,9 @@ const {
   PermissionFlagsBits,
   GuildScheduledEventPrivacyLevel,
   GuildScheduledEventEntityType,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } = require('discord.js');
 const { createErrorReply } = require('../utils/helpers');
 
@@ -353,7 +356,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle('🚨 Schedule Alliance Invasion')
         .setDescription(
-          `Step 4/4: Choose repetition pattern\n\n📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC\n⏱️ **Duration:** ${durationText}\n\n*This will create Discord Events that appear in your server's Events tab*`,
+          `Step 4/5: Choose repetition pattern\n\n📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC\n⏱️ **Duration:** ${durationText}\n\n*This will create Discord Events that appear in your server's Events tab*`,
         )
         .setColor(0x0099ff)
         .setTimestamp();
@@ -371,13 +374,187 @@ module.exports = {
     }
   },
 
-  // Handle repetition selection and create Discord events
+  // Handle repetition selection and show description options
   async handleRepetitionSelection(interaction) {
     try {
       const [, selectedDate, selectedTime, durationMinutes] =
         interaction.customId.split(':');
       const repetitionValue = interaction.values[0];
 
+      // Generate description/name options
+      const descriptionOptions = [
+        {
+          label: 'Alliance Invasion',
+          value: 'Alliance Invasion',
+          description: 'Standard alliance warfare event',
+        },
+        {
+          label: 'Custom Event',
+          value: 'custom',
+          description: 'Enter your own event name',
+        },
+      ];
+
+      const descriptionMenu = new StringSelectMenuBuilder()
+        .setCustomId(
+          `invasion_description_select:${selectedDate}:${selectedTime}:${durationMinutes}:${repetitionValue}`,
+        )
+        .setPlaceholder('📝 Select event type')
+        .addOptions(descriptionOptions);
+
+      const backButton = new ButtonBuilder()
+        .setCustomId('invasion_back_to_repetition')
+        .setLabel('← Back')
+        .setStyle(ButtonStyle.Secondary);
+
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+      const descriptionRow = new ActionRowBuilder().addComponents(
+        descriptionMenu,
+      );
+      const buttonRow = new ActionRowBuilder().addComponents(
+        backButton,
+        cancelButton,
+      );
+
+      const selectedDateObj = new Date(
+        selectedDate + 'T' + selectedTime + ':00Z',
+      );
+      const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      const formattedTime = selectedDateObj.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC',
+      });
+
+      // Format duration display
+      let durationText = `${durationMinutes} minutes`;
+      if (durationMinutes >= 60) {
+        const hours = Math.floor(durationMinutes / 60);
+        const mins = durationMinutes % 60;
+        durationText = mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+      }
+
+      // Format repetition display
+      let repetitionText = 'One-time event';
+      if (repetitionValue.startsWith('daily:')) {
+        const days = parseInt(repetitionValue.split(':')[1]);
+        repetitionText = `Daily for ${days} days`;
+      } else if (repetitionValue.startsWith('days:')) {
+        const [, dayInterval, count] = repetitionValue.split(':');
+        repetitionText = `Every ${dayInterval} days (${count} events)`;
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle('🚨 Schedule Alliance Invasion')
+        .setDescription(
+          `Step 5/5: Choose event name/type\n\n📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC\n⏱️ **Duration:** ${durationText}\n🔄 **Pattern:** ${repetitionText}`,
+        )
+        .setColor(0x0099ff)
+        .setTimestamp();
+
+      await interaction.update({
+        embeds: [embed],
+        components: [descriptionRow, buttonRow],
+      });
+    } catch (error) {
+      console.error('Repetition selection error:', error);
+      return createErrorReply(
+        interaction,
+        'Error processing repetition selection.',
+      );
+    }
+  },
+
+  // Handle description selection and create Discord events
+  async handleDescriptionSelection(interaction) {
+    try {
+      const [, selectedDate, selectedTime, durationMinutes, repetitionValue] =
+        interaction.customId.split(':');
+      let eventName = interaction.values[0];
+
+      // If custom selected, show modal for custom name
+      if (eventName === 'custom') {
+        const modal = new ModalBuilder()
+          .setCustomId(
+            `invasion_custom_name:${selectedDate}:${selectedTime}:${durationMinutes}:${repetitionValue}`,
+          )
+          .setTitle('Custom Event Name');
+
+        const nameInput = new TextInputBuilder()
+          .setCustomId('event_name')
+          .setLabel('Event Name')
+          .setStyle(TextInputStyle.Short)
+          .setPlaceholder('Enter your custom event name...')
+          .setRequired(true)
+          .setMinLength(1)
+          .setMaxLength(80);
+
+        const nameRow = new ActionRowBuilder().addComponents(nameInput);
+        modal.addComponents(nameRow);
+
+        await interaction.showModal(modal);
+        return;
+      }
+
+      await this.createInvasionEvents(
+        interaction,
+        selectedDate,
+        selectedTime,
+        durationMinutes,
+        repetitionValue,
+        eventName,
+      );
+    } catch (error) {
+      console.error('Description selection error:', error);
+      return createErrorReply(
+        interaction,
+        'Error processing description selection.',
+      );
+    }
+  },
+
+  // Handle custom name modal
+  async handleCustomNameModal(interaction) {
+    try {
+      const [, selectedDate, selectedTime, durationMinutes, repetitionValue] =
+        interaction.customId.split(':');
+      const eventName = interaction.fields.getTextInputValue('event_name');
+
+      await this.createInvasionEvents(
+        interaction,
+        selectedDate,
+        selectedTime,
+        durationMinutes,
+        repetitionValue,
+        eventName,
+      );
+    } catch (error) {
+      console.error('Custom name modal error:', error);
+      return createErrorReply(interaction, 'Error processing custom name.');
+    }
+  },
+
+  // Create the actual Discord events
+  async createInvasionEvents(
+    interaction,
+    selectedDate,
+    selectedTime,
+    durationMinutes,
+    repetitionValue,
+    eventName,
+  ) {
+    try {
       // Parse repetition pattern
       let eventDates = [];
       const startDate = new Date(selectedDate + 'T' + selectedTime + ':00Z');
@@ -416,21 +593,33 @@ module.exports = {
         });
       }
 
-      // Create Discord Scheduled Events
+      // Create Discord Scheduled Events with rate limiting protection
       const createdEvents = [];
       const errors = [];
 
-      for (let i = 0; i < futureDates.length; i++) {
-        const eventStart = futureDates[i];
+      // Limit to 8 events to avoid Discord limits and timeouts
+      const eventsToCreate = futureDates.slice(0, 8);
+
+      // Defer the reply to prevent interaction timeout
+      if (!interaction.deferred && !interaction.replied) {
+        if (interaction.isModalSubmit()) {
+          await interaction.deferReply();
+        } else {
+          await interaction.deferUpdate();
+        }
+      }
+
+      for (let i = 0; i < eventsToCreate.length; i++) {
+        const eventStart = eventsToCreate[i];
         const eventEnd = new Date(
           eventStart.getTime() + parseInt(durationMinutes) * 60 * 1000,
         );
 
         try {
           const eventTitle =
-            futureDates.length > 1
-              ? `⚔️ Alliance Invasion #${i + 1}`
-              : '⚔️ Alliance Invasion';
+            eventsToCreate.length > 1
+              ? `⚔️ ${eventName} #${i + 1}`
+              : `⚔️ ${eventName}`;
 
           const scheduledEvent = await interaction.guild.scheduledEvents.create(
             {
@@ -442,7 +631,7 @@ module.exports = {
               entityMetadata: {
                 location: 'Alliance Territory - Game World',
               },
-              description: `🚨 **Alliance Invasion Event**
+              description: `🚨 **${eventName} Event**
 
 📅 **Date:** ${eventStart.toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -464,22 +653,51 @@ module.exports = {
 
 🎯 **What to do:**
 • Gather your alliance members
-• Prepare your battle strategies  
+• Prepare your battle strategies
 • Coordinate attacks and defenses
 • Fight for glory and resources!
 
 👥 **Scheduled by:** <@${interaction.user.id}>
-${futureDates.length > 1 ? `🔄 **Series:** Event ${i + 1} of ${futureDates.length}` : ''}
+${eventsToCreate.length > 1 ? `🔄 **Series:** Event ${i + 1} of ${eventsToCreate.length}` : ''}
 
-*Click "Interested" to get notified when the invasion starts!*`,
-              reason: `Alliance invasion scheduled by ${interaction.user.tag}`,
+*Click "Interested" to get notified when the event starts!*`,
+              reason: `${eventName} scheduled by ${interaction.user.tag}`,
             },
           );
 
           createdEvents.push(scheduledEvent);
+
+          // Add delay between event creation to respect rate limits
+          if (i < eventsToCreate.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
+          }
         } catch (eventError) {
           console.error(`Error creating event ${i + 1}:`, eventError);
-          errors.push(`Event ${i + 1}: ${eventError.message}`);
+
+          // Check for specific Discord errors
+          if (eventError.code === 30031) {
+            errors.push(
+              `Event ${i + 1}: Server has reached maximum scheduled events limit`,
+            );
+            break; // Stop trying to create more events
+          } else if (eventError.code === 50013) {
+            errors.push(`Event ${i + 1}: Missing permissions to create events`);
+            break;
+          } else if (eventError.code === 40060) {
+            errors.push(
+              `Event ${i + 1}: Interaction has already been acknowledged`,
+            );
+          } else {
+            errors.push(
+              `Event ${i + 1}: ${eventError.message || 'Unknown error'}`,
+            );
+          }
+
+          // If we hit rate limit, add longer delay and continue
+          if (eventError.code === 429) {
+            console.log('Rate limited, waiting longer...');
+            await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 second delay for rate limit
+          }
         }
       }
 
@@ -488,7 +706,7 @@ ${futureDates.length > 1 ? `🔄 **Series:** Event ${i + 1} of ${futureDates.len
         const embed = new EmbedBuilder()
           .setTitle('✅ Discord Events Created Successfully!')
           .setDescription(
-            `🎉 ${createdEvents.length} invasion event${createdEvents.length > 1 ? 's' : ''} created!\n\n**Event Details:**`,
+            `🎉 ${createdEvents.length} ${eventName} event${createdEvents.length > 1 ? 's' : ''} created!\n\n**Event Details:**`,
           )
           .setColor(0x00ff00)
           .setTimestamp()
@@ -533,7 +751,7 @@ ${futureDates.length > 1 ? `🔄 **Series:** Event ${i + 1} of ${futureDates.len
             },
             {
               name: '📊 Summary',
-              value: `${createdEvents.length} events created\n⏱️ Duration: ${durationMinutes} minutes each`,
+              value: `${createdEvents.length} ${eventName} events created\n⏱️ Duration: ${durationMinutes} minutes each`,
               inline: false,
             },
           );
@@ -555,10 +773,27 @@ ${futureDates.length > 1 ? `🔄 **Series:** Event ${i + 1} of ${futureDates.len
           });
         }
 
-        await interaction.update({
-          embeds: [embed],
-          components: [],
-        });
+        // Add warning if we hit the event limit
+        if (futureDates.length > eventsToCreate.length) {
+          embed.addFields({
+            name: '📢 Note',
+            value: `Limited to ${eventsToCreate.length} events to prevent Discord rate limits and timeouts. Originally requested ${futureDates.length} events.`,
+            inline: false,
+          });
+        }
+
+        // Use the appropriate response method based on interaction type
+        if (interaction.isModalSubmit()) {
+          await interaction.followUp({
+            embeds: [embed],
+            components: [],
+          });
+        } else {
+          await interaction.editReply({
+            embeds: [embed],
+            components: [],
+          });
+        }
       } else {
         // All events failed
         const errorMessage =
@@ -566,18 +801,23 @@ ${futureDates.length > 1 ? `🔄 **Series:** Event ${i + 1} of ${futureDates.len
             ? `Errors: ${errors.slice(0, 3).join(', ')}`
             : 'Unknown error occurred';
 
-        return interaction.update({
-          content: `❌ **Error**: Failed to create any Discord events. ${errorMessage}`,
-          embeds: [],
-          components: [],
-        });
+        // Use the appropriate response method based on interaction type
+        if (interaction.isModalSubmit()) {
+          return interaction.followUp({
+            content: `❌ **Error**: Failed to create any Discord events. ${errorMessage}`,
+            components: [],
+          });
+        } else {
+          return interaction.editReply({
+            content: `❌ **Error**: Failed to create any Discord events. ${errorMessage}`,
+            embeds: [],
+            components: [],
+          });
+        }
       }
     } catch (error) {
-      console.error('Repetition selection error:', error);
-      return createErrorReply(
-        interaction,
-        'Error finalizing invasion schedule.',
-      );
+      console.error('Event creation error:', error);
+      return createErrorReply(interaction, 'Error creating events.');
     }
   },
 
