@@ -74,6 +74,11 @@ class InvasionHandlers {
       }
 
       const selectedTime = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+      console.log('DEBUG - Time parsing:');
+      console.log('  timeInput:', timeInput);
+      console.log('  timeMatch[1] (hours):', timeMatch[1]);
+      console.log('  timeMatch[2] (minutes):', timeMatch[2]);
+      console.log('  selectedTime:', selectedTime);
 
       // Check if selected time is in the past for today's date
       const now = new Date();
@@ -147,6 +152,11 @@ class InvasionHandlers {
         .setPlaceholder('⏱️ Select event duration')
         .addOptions(durationOptions);
 
+      console.log(
+        'DEBUG - showDurationSelection customId created:',
+        `invasion_duration_select:${selectedDate}:${selectedTime}`,
+      );
+
       const backButton = new ButtonBuilder()
         .setCustomId(`invasion_back_to_time:${selectedDate}`)
         .setLabel('← Back')
@@ -205,8 +215,17 @@ class InvasionHandlers {
   // Handle duration selection
   static async handleDurationSelection(interaction) {
     try {
-      const [, selectedDate, selectedTime] = interaction.customId.split(':');
+      const customIdParts = interaction.customId.split(':');
+      console.log('DEBUG - Duration selection customId parts:', customIdParts);
+
+      const selectedDate = customIdParts[1];
+      const selectedTime = customIdParts[2];
       const durationMinutes = parseInt(interaction.values[0]);
+
+      console.log('DEBUG - Duration selection parsed values:');
+      console.log('  selectedDate:', selectedDate);
+      console.log('  selectedTime:', selectedTime);
+      console.log('  durationMinutes:', durationMinutes);
 
       const repetitionOptions = [
         {
