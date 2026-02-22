@@ -171,12 +171,6 @@ module.exports = {
         try {
           if (interaction.customId === 'invasion_date_select') {
             await InvasionHandlers.handleDateSelection(interaction);
-          } else if (interaction.customId.startsWith('invasion_hour_select')) {
-            await InvasionHandlers.handleHourSelection(interaction);
-          } else if (
-            interaction.customId.startsWith('invasion_minute_select')
-          ) {
-            await InvasionHandlers.handleMinuteSelection(interaction);
           } else if (
             interaction.customId.startsWith('invasion_duration_select')
           ) {
@@ -220,6 +214,13 @@ module.exports = {
           await InvasionHandlers.handleCustomNameModal(interaction);
         } catch (error) {
           logger.error('Error handling invasion custom name modal:', error);
+        }
+      } else if (interaction.customId.startsWith('invasion_time_modal')) {
+        // Handle invasion time modal using refactored handlers
+        try {
+          await InvasionHandlers.handleTimeModal(interaction);
+        } catch (error) {
+          logger.error('Error handling invasion time modal:', error);
         }
       }
       return;

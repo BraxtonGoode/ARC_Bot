@@ -18,121 +18,61 @@ class InvasionHandlers {
     try {
       const selectedDate = interaction.values[0];
 
-      const hourOptions = InvasionUtils.generateTimeOptions();
-      const hourMenu = new StringSelectMenuBuilder()
-        .setCustomId(`invasion_hour_select:${selectedDate}`)
-        .setPlaceholder('🕐 Select invasion hour (UTC)')
-        .addOptions(hourOptions);
+      // Create a modal for time input
+      const modal = new ModalBuilder()
+        .setCustomId(`invasion_time_modal:${selectedDate}`)
+        .setTitle('Set Invasion Time');
 
-      const backButton = new ButtonBuilder()
-        .setCustomId('invasion_back_to_date')
-        .setLabel('← Back')
-        .setStyle(ButtonStyle.Secondary);
+      const timeInput = new TextInputBuilder()
+        .setCustomId('invasion_time')
+        .setLabel('Invasion Time (UTC)')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('HH:MM (e.g., 14:25, 23:00)')
+        .setRequired(true)
+        .setMinLength(4)
+        .setMaxLength(5);
 
-      const cancelButton = new ButtonBuilder()
-        .setCustomId('invasion_cancel')
-        .setLabel('Cancel')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('❌');
+      const timeRow = new ActionRowBuilder().addComponents(timeInput);
+      modal.addComponents(timeRow);
 
-      const hourRow = new ActionRowBuilder().addComponents(hourMenu);
-      const buttonRow = new ActionRowBuilder().addComponents(
-        backButton,
-        cancelButton,
-      );
-
-      const selectedDateObj = new Date(selectedDate + 'T00:00:00Z');
-      const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-
-      const embed = InvasionUtils.createStepEmbed(
-        2,
-        6,
-        'Select Hour',
-        `📅 **Selected Date:** ${formattedDate}`,
-      );
-
-      await interaction.update({
-        embeds: [embed],
-        components: [hourRow, buttonRow],
-      });
+      await interaction.showModal(modal);
     } catch (error) {
       console.error('Date selection error:', error);
       return createErrorReply(interaction, 'Error processing date selection.');
     }
   }
 
-  // Handle hour selection
-  static async handleHourSelection(interaction) {
+  // Handle time modal submission
+  static async handleTimeModal(interaction) {
     try {
       const [, selectedDate] = interaction.customId.split(':');
-      const selectedHour = interaction.values[0];
+      const timeInput = interaction.fields.getTextInputValue('invasion_time');
 
-      const minuteOptions = InvasionUtils.generateMinuteOptions();
-      const minuteMenu = new StringSelectMenuBuilder()
-        .setCustomId(`invasion_minute_select:${selectedDate}:${selectedHour}`)
-        .setPlaceholder('⏲️ Select invasion minutes')
-        .addOptions(minuteOptions);
+      // Validate time format (HH:MM)
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+      const timeMatch = timeInput.match(timeRegex);
 
-      const backButton = new ButtonBuilder()
-        .setCustomId(`invasion_back_to_hour:${selectedDate}`)
-        .setLabel('← Back')
-        .setStyle(ButtonStyle.Secondary);
+      if (!timeMatch) {
+        return interaction.reply({
+          content:
+            '❌ Invalid time format. Please use HH:MM format (e.g., 14:25, 09:00)',
+          ephemeral: true,
+        });
+      }
 
-      const cancelButton = new ButtonBuilder()
-        .setCustomId('invasion_cancel')
-        .setLabel('Cancel')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('❌');
+      const selectedTime = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
 
-      const minuteRow = new ActionRowBuilder().addComponents(minuteMenu);
-      const buttonRow = new ActionRowBuilder().addComponents(
-        backButton,
-        cancelButton,
-      );
-
-      const selectedDateObj = new Date(selectedDate + 'T00:00:00Z');
-      const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-      });
-
-      const hourDisplay = new Date(
-        `2000-01-01T${selectedHour.padStart(2, '0')}:00:00`,
-      ).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        hour12: true,
-      });
-
-      const embed = InvasionUtils.createStepEmbed(
-        3,
-        6,
-        'Select Minutes',
-        `📅 **Date:** ${formattedDate}\n🕐 **Hour:** ${hourDisplay} UTC`,
-      );
-
-      await interaction.update({
-        embeds: [embed],
-        components: [minuteRow, buttonRow],
-      });
+      // Continue to duration selection
+      await this.showDurationSelection(interaction, selectedDate, selectedTime);
     } catch (error) {
-      console.error('Hour selection error:', error);
-      return createErrorReply(interaction, 'Error processing hour selection.');
+      console.error('Time modal error:', error);
+      return createErrorReply(interaction, 'Error processing time input.');
     }
   }
 
-  // Handle minute selection
-  static async handleMinuteSelection(interaction) {
+  // Show duration selection
+  static async showDurationSelection(interaction, selectedDate, selectedTime) {
     try {
-      const [, selectedDate, selectedHour] = interaction.customId.split(':');
-      const selectedMinute = interaction.values[0];
-      const selectedTime = `${selectedHour.padStart(2, '0')}:${selectedMinute}`;
-
       // Generate duration options for the Discord event
       const durationOptions = [
         {
@@ -168,7 +108,7 @@ class InvasionHandlers {
         .addOptions(durationOptions);
 
       const backButton = new ButtonBuilder()
-        .setCustomId(`invasion_back_to_minute:${selectedDate}:${selectedHour}`)
+        .setCustomId(`invasion_back_to_time:${selectedDate}`)
         .setLabel('← Back')
         .setStyle(ButtonStyle.Secondary);
 
@@ -199,22 +139,19 @@ class InvasionHandlers {
       });
 
       const embed = InvasionUtils.createStepEmbed(
-        4,
-        6,
+        3,
+        5,
         'Select Duration',
         `📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC`,
       );
 
-      await interaction.update({
+      await interaction.reply({
         embeds: [embed],
         components: [durationRow, buttonRow],
       });
     } catch (error) {
-      console.error('Minute selection error:', error);
-      return createErrorReply(
-        interaction,
-        'Error processing minute selection.',
-      );
+      console.error('Duration selection error:', error);
+      return createErrorReply(interaction, 'Error showing duration selection.');
     }
   }
 
@@ -602,18 +539,64 @@ class InvasionHandlers {
 
   // Navigation handlers
   static async handleBackToDate(interaction) {
-    // This would need the original execute logic - simplified for now
-    return createErrorReply(
-      interaction,
-      'Navigation not implemented in refactored version.',
-    );
+    try {
+      // Show the date selection menu again
+      const dateOptions = InvasionUtils.generateDateOptions();
+
+      const dateMenu = new StringSelectMenuBuilder()
+        .setCustomId('invasion_date_select')
+        .setPlaceholder('📅 Select invasion date')
+        .addOptions(dateOptions);
+
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+      const dateRow = new ActionRowBuilder().addComponents(dateMenu);
+      const buttonRow = new ActionRowBuilder().addComponents(cancelButton);
+
+      const embed = InvasionUtils.createStepEmbed(
+        2,
+        5,
+        'Select Date',
+        'Choose when you want this invasion event to occur.',
+      );
+
+      await interaction.update({
+        embeds: [embed],
+        components: [dateRow, buttonRow],
+      });
+    } catch (error) {
+      console.error('Back to date error:', error);
+      return createErrorReply(
+        interaction,
+        'Error navigating back to date selection.',
+      );
+    }
   }
 
   static async handleBackToTime(interaction) {
-    return createErrorReply(
-      interaction,
-      'Navigation not implemented in refactored version.',
-    );
+    try {
+      const customId = interaction.customId;
+      const parts = customId.split(':');
+
+      if (parts.length < 2) {
+        return createErrorReply(interaction, 'Invalid navigation data.');
+      }
+
+      const selectedDate = parts[1];
+
+      // Show the time selection modal again
+      return this.showTimeModal(interaction, selectedDate);
+    } catch (error) {
+      console.error('Back to time error:', error);
+      return createErrorReply(
+        interaction,
+        'Error navigating back to time selection.',
+      );
+    }
   }
 
   static async handleCancel(interaction) {

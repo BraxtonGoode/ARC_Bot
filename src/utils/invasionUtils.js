@@ -44,46 +44,6 @@ class InvasionUtils {
     return options;
   }
 
-  static generateTimeOptions() {
-    const options = [];
-
-    // Generate hour options (24 options total)
-    for (let hour = 0; hour < 24; hour++) {
-      const timeValue = hour.toString();
-      const displayTime = new Date(
-        `2000-01-01T${hour.toString().padStart(2, '0')}:00:00`,
-      ).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        hour12: true,
-      });
-
-      options.push({
-        label: `🕐 ${displayTime}`,
-        value: timeValue,
-        description: `${hour.toString().padStart(2, '0')}:XX UTC`,
-      });
-    }
-
-    return options;
-  }
-
-  static generateMinuteOptions() {
-    const options = [];
-
-    // Generate minute options in 5-minute intervals (12 options: 0, 5, 10, ..., 55)
-    for (let minute = 0; minute < 60; minute += 5) {
-      const minuteStr = minute.toString().padStart(2, '0');
-
-      options.push({
-        label: `⏲️ :${minuteStr}`,
-        value: minuteStr,
-        description: `${minute} minutes past the hour`,
-      });
-    }
-
-    return options;
-  }
-
   static createStepEmbed(step, totalSteps, title, description) {
     return new EmbedBuilder()
       .setTitle(`🚨 Schedule Alliance Invasion`)
