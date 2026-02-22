@@ -17,6 +17,19 @@ class InvasionHandlers {
   static async handleDateSelection(interaction) {
     try {
       const selectedDate = interaction.values[0];
+      return this.showTimeModal(interaction, selectedDate);
+    } catch (error) {
+      console.error('Date selection error:', error);
+      return createErrorReply(interaction, 'Error processing date selection.');
+    }
+  }
+
+  // Show time input modal
+  static async showTimeModal(interaction, selectedDate) {
+    try {
+      // Get current UTC time for display
+      const now = new Date();
+      const currentUTCTime = now.toISOString().substring(11, 16); // HH:MM format
 
       // Create a modal for time input
       const modal = new ModalBuilder()
@@ -25,7 +38,7 @@ class InvasionHandlers {
 
       const timeInput = new TextInputBuilder()
         .setCustomId('invasion_time')
-        .setLabel('Invasion Time (UTC)')
+        .setLabel(`Invasion Time (Current UTC: ${currentUTCTime})`)
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('HH:MM (e.g., 14:25, 23:00)')
         .setRequired(true)
@@ -37,8 +50,8 @@ class InvasionHandlers {
 
       await interaction.showModal(modal);
     } catch (error) {
-      console.error('Date selection error:', error);
-      return createErrorReply(interaction, 'Error processing date selection.');
+      console.error('Time modal display error:', error);
+      return createErrorReply(interaction, 'Error showing time input modal.');
     }
   }
 
@@ -53,14 +66,46 @@ class InvasionHandlers {
       const timeMatch = timeInput.match(timeRegex);
 
       if (!timeMatch) {
-        return interaction.reply({
+        await interaction.reply({
           content:
-            '❌ Invalid time format. Please use HH:MM format (e.g., 14:25, 09:00)',
+            '❌ Invalid time format. Please use HH:MM format (e.g., 14:25, 09:00)\nPlease try again.',
           ephemeral: true,
         });
+        // Show the modal again for retry
+        setTimeout(() => {
+          this.showTimeModal(interaction, selectedDate);
+        }, 1000);
+        return;
       }
 
       const selectedTime = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+
+      // Check if selected time is in the past for today's date
+      const now = new Date();
+      const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+      if (selectedDate === today) {
+        const selectedDateTime = new Date(
+          `${selectedDate}T${selectedTime}:00Z`,
+        );
+        const currentTime = new Date();
+
+        // Add 5-minute buffer to account for processing time
+        const bufferTime = new Date(currentTime.getTime() + 5 * 60 * 1000);
+
+        if (selectedDateTime <= bufferTime) {
+          const currentUTC = currentTime.toISOString().substring(11, 16);
+          await interaction.reply({
+            content: `❌ Selected time (${selectedTime}) is in the past or too close to current UTC time (${currentUTC}).\nPlease select a time at least 5 minutes in the future.`,
+            ephemeral: true,
+          });
+          // Show the modal again for retry
+          setTimeout(() => {
+            this.showTimeModal(interaction, selectedDate);
+          }, 1000);
+          return;
+        }
+      }
 
       // Continue to duration selection
       await this.showDurationSelection(interaction, selectedDate, selectedTime);
