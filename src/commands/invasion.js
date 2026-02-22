@@ -580,9 +580,11 @@ module.exports = {
         }
       }
 
-      // Validate that all dates are in the future
-      const now = new Date();
-      const futureDates = eventDates.filter((date) => date > now);
+      // Validate that all dates are in the future (UTC comparison)
+      const nowUTC = new Date();
+      const futureDates = eventDates.filter(
+        (date) => date.getTime() > nowUTC.getTime(),
+      );
 
       if (futureDates.length === 0) {
         return interaction.update({
@@ -599,6 +601,7 @@ module.exports = {
 
       // Limit to 8 events to avoid Discord limits and timeouts
       const eventsToCreate = futureDates.slice(0, 8);
+      const totalEventCount = eventsToCreate.length; // Store the count to avoid any reference issues
 
       // Defer the reply to prevent interaction timeout
       if (!interaction.deferred && !interaction.replied) {
@@ -617,7 +620,7 @@ module.exports = {
 
         try {
           const eventTitle =
-            eventsToCreate.length > 1
+            totalEventCount > 1
               ? `⚔️ ${eventName} #${i + 1}`
               : `⚔️ ${eventName}`;
 
@@ -658,7 +661,7 @@ module.exports = {
 • Fight for glory and resources!
 
 👥 **Scheduled by:** <@${interaction.user.id}>
-${eventsToCreate.length > 1 ? `🔄 **Series:** Event ${i + 1} of ${eventsToCreate.length}` : ''}
+${totalEventCount > 1 ? `🔄 **Series:** Event ${i + 1} of ${totalEventCount}` : ''}
 
 *Click "Interested" to get notified when the event starts!*`,
               reason: `${eventName} scheduled by ${interaction.user.tag}`,
