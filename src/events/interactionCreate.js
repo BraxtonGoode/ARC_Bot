@@ -1,6 +1,10 @@
+// Updated interactionCreate.js to use refactored invasion handlers
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
+const { InvasionHandlers } = require('../utils/invasionHandlers');
+const { InvasionHandlers } = require('../utils/invasionHandlers');
+const { InvasionHandlers } = require('../utils/invasionHandlers');
 
 const charactersPath = path.join(__dirname, '..', 'data', 'characters.json');
 let characterChoices = [];
@@ -105,26 +109,17 @@ module.exports = {
           }
         }
       } else if (interaction.customId.startsWith('invasion_')) {
-        // Handle invasion-related buttons
-        const command = client.commands.get('invasion');
-        if (command) {
-          try {
-            if (interaction.customId === 'invasion_cancel') {
-              await command.handleCancel(interaction);
-            } else if (interaction.customId === 'invasion_back_to_date') {
-              await command.handleBackToDate(interaction);
-            } else if (interaction.customId === 'invasion_back_to_time') {
-              await command.handleBackToTime(interaction);
-            }
-          } catch (error) {
-            logger.error('Error handling invasion button:', error);
-            if (!interaction.replied) {
-              await interaction.reply({
-                content: 'An error occurred while processing your request.',
-                ephemeral: true,
-              });
-            }
+        // Handle invasion-related buttons using refactored handlers
+        try {
+          if (interaction.customId === 'invasion_cancel') {
+            await InvasionHandlers.handleCancel(interaction);
+          } else if (interaction.customId === 'invasion_back_to_date') {
+            await InvasionHandlers.handleBackToDate(interaction);
+          } else if (interaction.customId === 'invasion_back_to_time') {
+            await InvasionHandlers.handleBackToTime(interaction);
           }
+        } catch (error) {
+          logger.error('Error handling invasion button:', error);
         }
       }
       return;
@@ -174,38 +169,27 @@ module.exports = {
           }
         }
       } else if (interaction.customId.startsWith('invasion_')) {
-        // Handle invasion-related select menus
-        const command = client.commands.get('invasion');
-        if (command) {
-          try {
-            if (interaction.customId === 'invasion_date_select') {
-              await command.handleDateSelection(interaction);
-            } else if (
-              interaction.customId.startsWith('invasion_time_select')
-            ) {
-              await command.handleTimeSelection(interaction);
-            } else if (
-              interaction.customId.startsWith('invasion_duration_select')
-            ) {
-              await command.handleDurationSelection(interaction);
-            } else if (
-              interaction.customId.startsWith('invasion_repetition_select')
-            ) {
-              await command.handleRepetitionSelection(interaction);
-            } else if (
-              interaction.customId.startsWith('invasion_description_select')
-            ) {
-              await command.handleDescriptionSelection(interaction);
-            }
-          } catch (error) {
-            logger.error('Error handling invasion select menu:', error);
-            if (!interaction.replied) {
-              await interaction.reply({
-                content: 'An error occurred while processing your request.',
-                ephemeral: true,
-              });
-            }
+        // Handle invasion-related select menus using refactored handlers
+        try {
+          if (interaction.customId === 'invasion_date_select') {
+            await InvasionHandlers.handleDateSelection(interaction);
+          } else if (interaction.customId.startsWith('invasion_time_select')) {
+            await InvasionHandlers.handleTimeSelection(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_duration_select')
+          ) {
+            await InvasionHandlers.handleDurationSelection(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_repetition_select')
+          ) {
+            await InvasionHandlers.handleRepetitionSelection(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_description_select')
+          ) {
+            await InvasionHandlers.handleDescriptionSelection(interaction);
           }
+        } catch (error) {
+          logger.error('Error handling invasion select menu:', error);
         }
       }
       return;
@@ -229,20 +213,11 @@ module.exports = {
           }
         }
       } else if (interaction.customId.startsWith('invasion_custom_name')) {
-        const command = client.commands.get('invasion');
-        if (command && command.handleCustomNameModal) {
-          try {
-            await command.handleCustomNameModal(interaction);
-          } catch (error) {
-            logger.error('Error handling invasion custom name modal:', error);
-            if (!interaction.replied) {
-              await interaction.reply({
-                content:
-                  'An error occurred while processing your custom event name.',
-                ephemeral: true,
-              });
-            }
-          }
+        // Handle invasion custom name modal using refactored handlers
+        try {
+          await InvasionHandlers.handleCustomNameModal(interaction);
+        } catch (error) {
+          logger.error('Error handling invasion custom name modal:', error);
         }
       }
       return;
