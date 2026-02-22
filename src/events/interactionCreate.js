@@ -1,6 +1,8 @@
+// Updated interactionCreate.js to use refactored invasion handlers
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
+const { InvasionHandlers } = require('../utils/invasionHandlers');
 
 const charactersPath = path.join(__dirname, '..', 'data', 'characters.json');
 let characterChoices = [];
@@ -35,7 +37,7 @@ module.exports = {
         } catch (error) {
           console.error(
             `Error in autocomplete for /${command.data.name}:`,
-            error
+            error,
           );
         }
         return;
@@ -60,7 +62,7 @@ module.exports = {
           .filter(
             (choice) =>
               choice.name.toLowerCase().includes(focusedValue) ||
-              choice.value.toLowerCase().includes(focusedValue)
+              choice.value.toLowerCase().includes(focusedValue),
           )
           .slice(0, 25)
           .map((choice) => ({ name: choice.name, value: choice.value }));
@@ -104,6 +106,29 @@ module.exports = {
             }
           }
         }
+      } else if (interaction.customId.startsWith('invasion_')) {
+        // Handle invasion-related buttons using refactored handlers
+        try {
+          if (interaction.customId === 'invasion_cancel') {
+            await InvasionHandlers.handleCancel(interaction);
+          } else if (interaction.customId === 'invasion_back_to_date') {
+            await InvasionHandlers.handleBackToDate(interaction);
+          } else if (interaction.customId.startsWith('invasion_back_to_time')) {
+            await InvasionHandlers.handleBackToTime(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_back_to_duration')
+          ) {
+            await InvasionHandlers.handleBackToDuration(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_back_to_repetition')
+          ) {
+            await InvasionHandlers.handleBackToRepetition(interaction);
+          } else if (interaction.customId === 'invasion_restart') {
+            await InvasionHandlers.handleRestart(interaction);
+          }
+        } catch (error) {
+          logger.error('Error handling invasion button:', error);
+        }
       }
       return;
     }
@@ -134,7 +159,7 @@ module.exports = {
         }
       } else if (
         ['current_skill_level', 'target_skill_level'].includes(
-          interaction.customId
+          interaction.customId,
         )
       ) {
         const command = client.commands.get('skillcalculator');
@@ -150,6 +175,27 @@ module.exports = {
               });
             }
           }
+        }
+      } else if (interaction.customId.startsWith('invasion_')) {
+        // Handle invasion-related select menus using refactored handlers
+        try {
+          if (interaction.customId === 'invasion_date_select') {
+            await InvasionHandlers.handleDateSelection(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_duration_select')
+          ) {
+            await InvasionHandlers.handleDurationSelection(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_repetition_select')
+          ) {
+            await InvasionHandlers.handleRepetitionSelection(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_description_select')
+          ) {
+            await InvasionHandlers.handleDescriptionSelection(interaction);
+          }
+        } catch (error) {
+          logger.error('Error handling invasion select menu:', error);
         }
       }
       return;
@@ -171,6 +217,20 @@ module.exports = {
               });
             }
           }
+        }
+      } else if (interaction.customId.startsWith('invasion_custom_name')) {
+        // Handle invasion custom name modal using refactored handlers
+        try {
+          await InvasionHandlers.handleCustomNameModal(interaction);
+        } catch (error) {
+          logger.error('Error handling invasion custom name modal:', error);
+        }
+      } else if (interaction.customId.startsWith('invasion_time_modal')) {
+        // Handle invasion time modal using refactored handlers
+        try {
+          await InvasionHandlers.handleTimeModal(interaction);
+        } catch (error) {
+          logger.error('Error handling invasion time modal:', error);
         }
       }
       return;
