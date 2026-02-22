@@ -3,8 +3,6 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
 const { InvasionHandlers } = require('../utils/invasionHandlers');
-const { InvasionHandlers } = require('../utils/invasionHandlers');
-const { InvasionHandlers } = require('../utils/invasionHandlers');
 
 const charactersPath = path.join(__dirname, '..', 'data', 'characters.json');
 let characterChoices = [];
