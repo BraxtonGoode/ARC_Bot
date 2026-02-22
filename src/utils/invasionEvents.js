@@ -119,6 +119,8 @@ class InvasionEvents {
   }
 
   // Try to create a recurring event using Discord's native recurrence
+  // NOTE: Discord recurring events create 1 parent event that automatically
+  // generates individual instances. Each instance appears separately in Discord's UI!
   static async tryCreateRecurringEvent(
     guild,
     eventDates,
@@ -236,10 +238,25 @@ class InvasionEvents {
         'DEBUG - Recurring event created successfully:',
         createdEvent.id,
       );
+      console.log(
+        'DEBUG - This single recurring event will automatically generate',
+        eventDates.length,
+        'individual instances',
+      );
+      console.log(
+        "DEBUG - Each instance will appear as a separate entry in Discord but they're all part of one recurring event",
+      );
 
       return {
         success: true,
-        createdEvents: [{ name: `⚔️ ${eventName} Series`, date: startDate }],
+        createdEvents: [
+          {
+            name: `⚔️ ${eventName} Series`,
+            date: startDate,
+            type: 'RECURRING_PARENT',
+            instanceCount: eventDates.length,
+          },
+        ],
         errors: [],
       };
     } catch (error) {
@@ -250,6 +267,7 @@ class InvasionEvents {
   }
 
   // Try to create a series of individual events that reference each other
+  // NOTE: This creates completely separate Discord events that cross-reference each other
   // This method works with ANY date arrangement - no frequency rules required!
   static async tryCreateEventSeries(
     guild,
@@ -328,7 +346,10 @@ class InvasionEvents {
           });
 
           console.log(
-            `DEBUG - Created event ${eventNumber}/${totalEvents}: ${createdEvent.id}`,
+            `DEBUG - Created individual event ${eventNumber}/${totalEvents}: ${createdEvent.id}`,
+          );
+          console.log(
+            `DEBUG - This is a separate standalone event, not part of Discord's recurring system`,
           );
         } catch (error) {
           console.error(
