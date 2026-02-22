@@ -188,6 +188,10 @@ module.exports = {
               interaction.customId.startsWith('invasion_duration_select')
             ) {
               await command.handleDurationSelection(interaction);
+            } else if (
+              interaction.customId.startsWith('invasion_repetition_select')
+            ) {
+              await command.handleRepetitionSelection(interaction);
             }
           } catch (error) {
             logger.error('Error handling invasion select menu:', error);
