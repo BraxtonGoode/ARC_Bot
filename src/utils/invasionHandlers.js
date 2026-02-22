@@ -474,6 +474,13 @@ class InvasionHandlers {
     repetitionValue,
     eventName,
   ) {
+    console.log('DEBUG - createInvasionEvents called with:');
+    console.log('  selectedDate:', selectedDate);
+    console.log('  selectedTime:', selectedTime);
+    console.log('  durationMinutes:', durationMinutes);
+    console.log('  repetitionValue:', repetitionValue);
+    console.log('  eventName:', eventName);
+
     try {
       // Parse repetition pattern
       const startDate = new Date(selectedDate + 'T' + selectedTime + ':00Z');

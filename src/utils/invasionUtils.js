@@ -111,11 +111,15 @@ class InvasionUtils {
 
   static parseRepetitionPattern(repetitionValue, startDate) {
     let eventDates = [];
+    console.log('DEBUG - parseRepetitionPattern called with:', repetitionValue);
 
     if (repetitionValue === 'once') {
+      console.log('DEBUG - Matched "once" pattern');
       eventDates.push(startDate);
     } else if (repetitionValue.startsWith('daily:')) {
+      console.log('DEBUG - Matched "daily:" pattern');
       const days = parseInt(repetitionValue.split(':')[1]);
+      console.log('DEBUG - Days parsed:', days);
       for (let i = 0; i < days; i++) {
         const eventDate = new Date(
           startDate.getTime() + i * 24 * 60 * 60 * 1000,
@@ -123,9 +127,11 @@ class InvasionUtils {
         eventDates.push(eventDate);
       }
     } else if (repetitionValue.startsWith('days:')) {
+      console.log('DEBUG - Matched "days:" pattern');
       const [, dayInterval, count] = repetitionValue.split(':');
       const interval = parseInt(dayInterval);
       const eventCount = parseInt(count);
+      console.log('DEBUG - Interval:', interval, 'Count:', eventCount);
 
       for (let i = 0; i < eventCount; i++) {
         const eventDate = new Date(
@@ -133,8 +139,14 @@ class InvasionUtils {
         );
         eventDates.push(eventDate);
       }
+    } else {
+      console.log(
+        'DEBUG - No pattern matched! repetitionValue:',
+        repetitionValue,
+      );
     }
 
+    console.log('DEBUG - Generated event dates:', eventDates);
     return eventDates;
   }
 }
