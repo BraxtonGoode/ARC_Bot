@@ -95,9 +95,17 @@ class InvasionUtils {
 
   static validateDates(eventDates) {
     const nowUTC = new Date();
-    const futureDates = eventDates.filter(
-      (date) => date.getTime() > nowUTC.getTime(),
-    );
+    // Add a small buffer (5 minutes) to account for processing time
+    const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const validationTime = new Date(nowUTC.getTime() + bufferTime);
+
+    console.log('DEBUG - Validation time (now + 5min buffer):', validationTime);
+
+    const futureDates = eventDates.filter((date) => {
+      const isValid = date.getTime() > validationTime.getTime();
+      console.log('DEBUG - Date:', date, 'Is valid:', isValid);
+      return isValid;
+    });
     return futureDates;
   }
 

@@ -477,13 +477,24 @@ class InvasionHandlers {
     try {
       // Parse repetition pattern
       const startDate = new Date(selectedDate + 'T' + selectedTime + ':00Z');
+      console.log('DEBUG - Start date created:', startDate);
+      console.log(
+        'DEBUG - selectedDate:',
+        selectedDate,
+        'selectedTime:',
+        selectedTime,
+      );
+
       const eventDates = InvasionUtils.parseRepetitionPattern(
         repetitionValue,
         startDate,
       );
+      console.log('DEBUG - Event dates generated:', eventDates);
 
       // Validate that all dates are in the future (UTC comparison)
       const futureDates = InvasionUtils.validateDates(eventDates);
+      console.log('DEBUG - Current UTC time:', new Date());
+      console.log('DEBUG - Future dates filtered:', futureDates);
 
       if (futureDates.length === 0) {
         return interaction.update({
