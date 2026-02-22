@@ -109,8 +109,9 @@ class InvasionUtils {
     } else if (repetitionValue.startsWith('daily:')) {
       const days = parseInt(repetitionValue.split(':')[1]);
       for (let i = 0; i < days; i++) {
-        const eventDate = new Date(startDate);
-        eventDate.setDate(startDate.getDate() + i);
+        const eventDate = new Date(
+          startDate.getTime() + i * 24 * 60 * 60 * 1000,
+        );
         eventDates.push(eventDate);
       }
     } else if (repetitionValue.startsWith('days:')) {
@@ -119,8 +120,9 @@ class InvasionUtils {
       const eventCount = parseInt(count);
 
       for (let i = 0; i < eventCount; i++) {
-        const eventDate = new Date(startDate);
-        eventDate.setDate(startDate.getDate() + i * interval);
+        const eventDate = new Date(
+          startDate.getTime() + i * interval * 24 * 60 * 60 * 1000,
+        );
         eventDates.push(eventDate);
       }
     }
