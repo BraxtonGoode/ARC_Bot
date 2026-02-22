@@ -47,21 +47,37 @@ class InvasionUtils {
   static generateTimeOptions() {
     const options = [];
 
-    // Generate time options every hour (24 options total)
+    // Generate hour options (24 options total)
     for (let hour = 0; hour < 24; hour++) {
-      const timeValue = `${hour.toString().padStart(2, '0')}:00`;
+      const timeValue = hour.toString();
       const displayTime = new Date(
-        `2000-01-01T${timeValue}:00`,
+        `2000-01-01T${hour.toString().padStart(2, '0')}:00:00`,
       ).toLocaleTimeString('en-US', {
         hour: 'numeric',
-        minute: '2-digit',
         hour12: true,
       });
 
       options.push({
-        label: `🕐 ${displayTime} UTC`,
+        label: `🕐 ${displayTime}`,
         value: timeValue,
-        description: `Scheduled for ${timeValue} UTC`,
+        description: `${hour.toString().padStart(2, '0')}:XX UTC`,
+      });
+    }
+
+    return options;
+  }
+
+  static generateMinuteOptions() {
+    const options = [];
+
+    // Generate minute options in 5-minute intervals (12 options: 0, 5, 10, ..., 55)
+    for (let minute = 0; minute < 60; minute += 5) {
+      const minuteStr = minute.toString().padStart(2, '0');
+
+      options.push({
+        label: `⏲️ :${minuteStr}`,
+        value: minuteStr,
+        description: `${minute} minutes past the hour`,
       });
     }
 

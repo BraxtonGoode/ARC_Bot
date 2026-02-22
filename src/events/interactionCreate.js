@@ -171,8 +171,12 @@ module.exports = {
         try {
           if (interaction.customId === 'invasion_date_select') {
             await InvasionHandlers.handleDateSelection(interaction);
-          } else if (interaction.customId.startsWith('invasion_time_select')) {
-            await InvasionHandlers.handleTimeSelection(interaction);
+          } else if (interaction.customId.startsWith('invasion_hour_select')) {
+            await InvasionHandlers.handleHourSelection(interaction);
+          } else if (
+            interaction.customId.startsWith('invasion_minute_select')
+          ) {
+            await InvasionHandlers.handleMinuteSelection(interaction);
           } else if (
             interaction.customId.startsWith('invasion_duration_select')
           ) {

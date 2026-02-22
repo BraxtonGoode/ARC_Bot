@@ -37,9 +37,10 @@ module.exports = {
       const buttonRow = new ActionRowBuilder().addComponents(cancelButton);
 
       const embed = InvasionUtils.createStepEmbed(
-        1, 5,
+        1,
+        6,
         'Select Date',
-        'Choose the date for your invasion event'
+        'Choose the date for your invasion event',
       );
 
       await interaction.reply({
@@ -47,10 +48,12 @@ module.exports = {
         components: [dateRow, buttonRow],
         ephemeral: false,
       });
-
     } catch (error) {
       console.error('Invasion command error:', error);
-      return createErrorReply(interaction, 'Error starting invasion scheduler.');
+      return createErrorReply(
+        interaction,
+        'Error starting invasion scheduler.',
+      );
     }
   },
 };

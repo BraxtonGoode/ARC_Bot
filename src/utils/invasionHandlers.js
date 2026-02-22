@@ -18,11 +18,11 @@ class InvasionHandlers {
     try {
       const selectedDate = interaction.values[0];
 
-      const timeOptions = InvasionUtils.generateTimeOptions();
-      const timeMenu = new StringSelectMenuBuilder()
-        .setCustomId(`invasion_time_select:${selectedDate}`)
-        .setPlaceholder('🕐 Select invasion time (UTC)')
-        .addOptions(timeOptions);
+      const hourOptions = InvasionUtils.generateTimeOptions();
+      const hourMenu = new StringSelectMenuBuilder()
+        .setCustomId(`invasion_hour_select:${selectedDate}`)
+        .setPlaceholder('🕐 Select invasion hour (UTC)')
+        .addOptions(hourOptions);
 
       const backButton = new ButtonBuilder()
         .setCustomId('invasion_back_to_date')
@@ -35,7 +35,7 @@ class InvasionHandlers {
         .setStyle(ButtonStyle.Secondary)
         .setEmoji('❌');
 
-      const timeRow = new ActionRowBuilder().addComponents(timeMenu);
+      const hourRow = new ActionRowBuilder().addComponents(hourMenu);
       const buttonRow = new ActionRowBuilder().addComponents(
         backButton,
         cancelButton,
@@ -51,14 +51,14 @@ class InvasionHandlers {
 
       const embed = InvasionUtils.createStepEmbed(
         2,
-        5,
-        'Select Time',
+        6,
+        'Select Hour',
         `📅 **Selected Date:** ${formattedDate}`,
       );
 
       await interaction.update({
         embeds: [embed],
-        components: [timeRow, buttonRow],
+        components: [hourRow, buttonRow],
       });
     } catch (error) {
       console.error('Date selection error:', error);
@@ -66,11 +66,72 @@ class InvasionHandlers {
     }
   }
 
-  // Handle time selection
-  static async handleTimeSelection(interaction) {
+  // Handle hour selection
+  static async handleHourSelection(interaction) {
     try {
       const [, selectedDate] = interaction.customId.split(':');
-      const selectedTime = interaction.values[0];
+      const selectedHour = interaction.values[0];
+
+      const minuteOptions = InvasionUtils.generateMinuteOptions();
+      const minuteMenu = new StringSelectMenuBuilder()
+        .setCustomId(`invasion_minute_select:${selectedDate}:${selectedHour}`)
+        .setPlaceholder('⏲️ Select invasion minutes')
+        .addOptions(minuteOptions);
+
+      const backButton = new ButtonBuilder()
+        .setCustomId(`invasion_back_to_hour:${selectedDate}`)
+        .setLabel('← Back')
+        .setStyle(ButtonStyle.Secondary);
+
+      const cancelButton = new ButtonBuilder()
+        .setCustomId('invasion_cancel')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+      const minuteRow = new ActionRowBuilder().addComponents(minuteMenu);
+      const buttonRow = new ActionRowBuilder().addComponents(
+        backButton,
+        cancelButton,
+      );
+
+      const selectedDateObj = new Date(selectedDate + 'T00:00:00Z');
+      const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const hourDisplay = new Date(
+        `2000-01-01T${selectedHour.padStart(2, '0')}:00:00`,
+      ).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        hour12: true,
+      });
+
+      const embed = InvasionUtils.createStepEmbed(
+        3,
+        6,
+        'Select Minutes',
+        `📅 **Date:** ${formattedDate}\n🕐 **Hour:** ${hourDisplay} UTC`,
+      );
+
+      await interaction.update({
+        embeds: [embed],
+        components: [minuteRow, buttonRow],
+      });
+    } catch (error) {
+      console.error('Hour selection error:', error);
+      return createErrorReply(interaction, 'Error processing hour selection.');
+    }
+  }
+
+  // Handle minute selection
+  static async handleMinuteSelection(interaction) {
+    try {
+      const [, selectedDate, selectedHour] = interaction.customId.split(':');
+      const selectedMinute = interaction.values[0];
+      const selectedTime = `${selectedHour.padStart(2, '0')}:${selectedMinute}`;
 
       // Generate duration options for the Discord event
       const durationOptions = [
@@ -107,7 +168,7 @@ class InvasionHandlers {
         .addOptions(durationOptions);
 
       const backButton = new ButtonBuilder()
-        .setCustomId(`invasion_back_to_time:${selectedDate}`)
+        .setCustomId(`invasion_back_to_minute:${selectedDate}:${selectedHour}`)
         .setLabel('← Back')
         .setStyle(ButtonStyle.Secondary);
 
@@ -138,8 +199,8 @@ class InvasionHandlers {
       });
 
       const embed = InvasionUtils.createStepEmbed(
-        3,
-        5,
+        4,
+        6,
         'Select Duration',
         `📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC`,
       );
@@ -149,8 +210,11 @@ class InvasionHandlers {
         components: [durationRow, buttonRow],
       });
     } catch (error) {
-      console.error('Time selection error:', error);
-      return createErrorReply(interaction, 'Error processing time selection.');
+      console.error('Minute selection error:', error);
+      return createErrorReply(
+        interaction,
+        'Error processing minute selection.',
+      );
     }
   }
 
@@ -190,7 +254,7 @@ class InvasionHandlers {
           label: '🔄 Monthly (2 events)',
           value: 'days:30:2',
           description: 'Same time each month, 2 total events',
-        }
+        },
       ];
 
       const repetitionMenu = new StringSelectMenuBuilder()
@@ -241,8 +305,8 @@ class InvasionHandlers {
           : `${durationMinutes} minutes`;
 
       const embed = InvasionUtils.createStepEmbed(
-        4,
         5,
+        6,
         'Select Repetition',
         `📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC\n⏱️ **Duration:** ${durationText}`,
       );
@@ -274,14 +338,14 @@ class InvasionHandlers {
           description: 'Standard alliance invasion event',
         },
         {
-            label: '🏯 Temple War',
-            value: 'Temple War',
-            description: 'Temple War event',
+          label: '🏯 Temple War',
+          value: 'Temple War',
+          description: 'Temple War event',
         },
         {
-            label: ' Murong\'s Grand Melee (MGM)',
-            value: 'Murong\'s Grand Melee',
-            description: 'Murong\'s Grand Melee event',
+          label: " Murong's Grand Melee (MGM)",
+          value: "Murong's Grand Melee",
+          description: "Murong's Grand Melee event",
         },
 
         {
@@ -349,8 +413,8 @@ class InvasionHandlers {
       }
 
       const embed = InvasionUtils.createStepEmbed(
-        5,
-        5,
+        6,
+        6,
         'Choose Event Name',
         `📅 **Date:** ${formattedDate}\n🕐 **Time:** ${formattedTime} UTC\n⏱️ **Duration:** ${durationText}\n🔄 **Pattern:** ${repetitionText}`,
       );
