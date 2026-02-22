@@ -221,6 +221,13 @@ class InvasionHandlers {
       const selectedDate = customIdParts[1];
       // Reconstruct the time from parts [2] and [3] (hour:minute)
       const selectedTime = `${customIdParts[2]}:${customIdParts[3]}`;
+      // Get the selected duration from user's dropdown choice
+      const durationMinutes = parseInt(interaction.values[0]);
+
+      console.log('DEBUG - Duration selection parsed values:');
+      console.log('  selectedDate:', selectedDate);
+      console.log('  selectedTime:', selectedTime);
+      console.log('  durationMinutes:', durationMinutes);
 
       const repetitionOptions = [
         {
