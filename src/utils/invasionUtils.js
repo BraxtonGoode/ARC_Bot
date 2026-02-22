@@ -39,24 +39,22 @@ class InvasionUtils {
   static generateTimeOptions() {
     const options = [];
 
-    // Generate time options every 30 minutes
+    // Generate time options every hour (24 options total)
     for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const timeValue = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const displayTime = new Date(
-          `2000-01-01T${timeValue}:00`,
-        ).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-        });
+      const timeValue = `${hour.toString().padStart(2, '0')}:00`;
+      const displayTime = new Date(
+        `2000-01-01T${timeValue}:00`,
+      ).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
 
-        options.push({
-          label: `🕐 ${displayTime} UTC`,
-          value: timeValue,
-          description: `Scheduled for ${timeValue} UTC`,
-        });
-      }
+      options.push({
+        label: `🕐 ${displayTime} UTC`,
+        value: timeValue,
+        description: `Scheduled for ${timeValue} UTC`,
+      });
     }
 
     return options;
