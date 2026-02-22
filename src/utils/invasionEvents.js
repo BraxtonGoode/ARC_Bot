@@ -7,6 +7,19 @@ const {
 
 class InvasionEvents {
   static async createEvents(guild, eventDates, durationMinutes, eventName) {
+    console.log(
+      'DEBUG - InvasionEvents.createEvents called with guild:',
+      guild ? guild.id : 'null',
+    );
+
+    if (!guild) {
+      console.error('DEBUG - Guild is null in createEvents method');
+      return {
+        createdEvents: [],
+        errors: ['Guild not available for event creation'],
+      };
+    }
+
     const createdEvents = [];
     const errors = [];
     const totalEventCount = eventDates.length;

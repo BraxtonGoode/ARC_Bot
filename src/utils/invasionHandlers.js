@@ -569,6 +569,10 @@ class InvasionHandlers {
     console.log('  durationMinutes:', durationMinutes);
     console.log('  repetitionValue:', repetitionValue);
     console.log('  eventName:', eventName);
+    console.log('DEBUG - Interaction details:');
+    console.log('  guildId:', interaction.guildId);
+    console.log('  guild available:', !!interaction.guild);
+    console.log('  client available:', !!interaction.client);
 
     try {
       // Parse repetition pattern
@@ -608,9 +612,50 @@ class InvasionHandlers {
         await interaction.deferUpdate();
       }
 
+      // Validate guild access
+      let guild = interaction.guild;
+      console.log('DEBUG - Guild from interaction:', guild ? guild.id : 'null');
+
+      if (!guild) {
+        // Try to get guild from client if missing
+        if (interaction.guildId && interaction.client) {
+          try {
+            guild = await interaction.client.guilds.fetch(interaction.guildId);
+            console.log(
+              'DEBUG - Guild fetched from client:',
+              guild ? guild.id : 'still null',
+            );
+          } catch (fetchError) {
+            console.error('DEBUG - Failed to fetch guild:', fetchError.message);
+          }
+        }
+      }
+
+      if (!guild) {
+        return interaction.followUp({
+          content:
+            '❌ Unable to access server information. Please make sure the bot has proper permissions and try again.',
+          ephemeral: true,
+        });
+      }
+
+      // Check bot permissions for managing events
+      const botMember =
+        guild.members.me ||
+        (await guild.members.fetch(interaction.client.user.id));
+      if (!botMember.permissions.has('ManageEvents')) {
+        return interaction.followUp({
+          content:
+            '❌ I need the "Manage Events" permission to create scheduled events. Please ask an admin to grant this permission.',
+          ephemeral: true,
+        });
+      }
+
+      console.log('DEBUG - Guild and permissions validated successfully');
+
       // Create Discord Scheduled Events
       const { createdEvents, errors } = await InvasionEvents.createEvents(
-        interaction.guild,
+        guild,
         futureDates,
         parseInt(durationMinutes),
         eventName,
