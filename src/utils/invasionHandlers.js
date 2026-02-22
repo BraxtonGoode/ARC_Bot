@@ -219,13 +219,8 @@ class InvasionHandlers {
       console.log('DEBUG - Duration selection customId parts:', customIdParts);
 
       const selectedDate = customIdParts[1];
-      const selectedTime = customIdParts[2];
-      const durationMinutes = parseInt(interaction.values[0]);
-
-      console.log('DEBUG - Duration selection parsed values:');
-      console.log('  selectedDate:', selectedDate);
-      console.log('  selectedTime:', selectedTime);
-      console.log('  durationMinutes:', durationMinutes);
+      // Reconstruct the time from parts [2] and [3] (hour:minute)
+      const selectedTime = `${customIdParts[2]}:${customIdParts[3]}`;
 
       const repetitionOptions = [
         {
@@ -330,9 +325,19 @@ class InvasionHandlers {
   // Handle repetition selection
   static async handleRepetitionSelection(interaction) {
     try {
-      const [, selectedDate, selectedTime, durationMinutes] =
-        interaction.customId.split(':');
+      const customIdParts = interaction.customId.split(':');
+
+      const selectedDate = customIdParts[1];
+      // Reconstruct time from parts [2] and [3] (hour:minute)
+      const selectedTime = `${customIdParts[2]}:${customIdParts[3]}`;
+      const durationMinutes = customIdParts[4];
       const repetitionValue = interaction.values[0];
+
+      console.log('DEBUG - Repetition selection parsed values:');
+      console.log('  selectedDate:', selectedDate);
+      console.log('  selectedTime:', selectedTime);
+      console.log('  durationMinutes:', durationMinutes);
+      console.log('  repetitionValue:', repetitionValue);
 
       const descriptionOptions = [
         {
@@ -440,10 +445,17 @@ class InvasionHandlers {
     try {
       const parts = interaction.customId.split(':');
       const selectedDate = parts[1];
-      const selectedTime = parts[2];
-      const durationMinutes = parts[3];
+      // Reconstruct time from parts [2] and [3] (hour:minute)
+      const selectedTime = `${parts[2]}:${parts[3]}`;
+      const durationMinutes = parts[4];
       // Rejoin the remaining parts to get full repetition value (handles internal colons)
-      const repetitionValue = parts.slice(4).join(':');
+      const repetitionValue = parts.slice(5).join(':');
+
+      console.log('DEBUG - Description selection parsed values:');
+      console.log('  selectedDate:', selectedDate);
+      console.log('  selectedTime:', selectedTime);
+      console.log('  durationMinutes:', durationMinutes);
+      console.log('  repetitionValue:', repetitionValue);
 
       let eventName = interaction.values[0];
 
@@ -492,10 +504,17 @@ class InvasionHandlers {
     try {
       const parts = interaction.customId.split(':');
       const selectedDate = parts[1];
-      const selectedTime = parts[2];
-      const durationMinutes = parts[3];
+      // Reconstruct time from parts [2] and [3] (hour:minute)
+      const selectedTime = `${parts[2]}:${parts[3]}`;
+      const durationMinutes = parts[4];
       // Rejoin the remaining parts to get full repetition value (handles internal colons)
-      const repetitionValue = parts.slice(4).join(':');
+      const repetitionValue = parts.slice(5).join(':');
+
+      console.log('DEBUG - Custom name modal parsed values:');
+      console.log('  selectedDate:', selectedDate);
+      console.log('  selectedTime:', selectedTime);
+      console.log('  durationMinutes:', durationMinutes);
+      console.log('  repetitionValue:', repetitionValue);
 
       const eventName = interaction.fields.getTextInputValue('event_name');
 
@@ -751,12 +770,13 @@ class InvasionHandlers {
       const customId = interaction.customId;
       const parts = customId.split(':');
 
-      if (parts.length < 3) {
+      if (parts.length < 4) {
         return createErrorReply(interaction, 'Invalid navigation data.');
       }
 
       const selectedDate = parts[1];
-      const selectedTime = parts[2];
+      // Reconstruct time from parts [2] and [3] (hour:minute)
+      const selectedTime = `${parts[2]}:${parts[3]}`;
 
       // Show duration selection again
       return this.showDurationSelection(
@@ -779,13 +799,14 @@ class InvasionHandlers {
       const customId = interaction.customId;
       const parts = customId.split(':');
 
-      if (parts.length < 4) {
+      if (parts.length < 5) {
         return createErrorReply(interaction, 'Invalid navigation data.');
       }
 
       const selectedDate = parts[1];
-      const selectedTime = parts[2];
-      const durationMinutes = parseInt(parts[3]);
+      // Reconstruct time from parts [2] and [3] (hour:minute)
+      const selectedTime = `${parts[2]}:${parts[3]}`;
+      const durationMinutes = parseInt(parts[4]);
 
       // Show repetition selection again
       return this.showRepetitionSelection(
