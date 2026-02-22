@@ -21,7 +21,14 @@ class InvasionEvents {
       );
     }
 
-    // Try to create as recurring event first
+    // Try different approaches for multi-event series
+    console.log(
+      'DEBUG - Attempting to create event series with',
+      totalEventCount,
+      'events',
+    );
+
+    // 1. Try Discord native recurring events first
     const recurringResult = await this.tryCreateRecurringEvent(
       guild,
       eventDates,
@@ -30,10 +37,25 @@ class InvasionEvents {
     );
 
     if (recurringResult.success) {
+      console.log('DEBUG - Successfully created recurring event series');
       return recurringResult;
     }
 
-    // Fall back to single event with multiple sessions
+    // 2. Try creating event series with individual events that reference each other
+    const seriesResult = await this.tryCreateEventSeries(
+      guild,
+      eventDates,
+      durationMinutes,
+      eventName,
+    );
+
+    if (seriesResult.success) {
+      console.log('DEBUG - Successfully created linked event series');
+      return seriesResult;
+    }
+
+    // 3. Fall back to single event with multiple sessions
+    console.log('DEBUG - Falling back to multi-session event');
     return this.createMultiSessionEvent(
       guild,
       eventDates,
@@ -104,7 +126,9 @@ class InvasionEvents {
     eventName,
   ) {
     try {
-      // Check if dates follow a daily pattern
+      console.log('DEBUG - Attempting native recurring event creation');
+
+      // Check if dates follow a consistent pattern
       const sortedDates = eventDates.sort((a, b) => a.getTime() - b.getTime());
       const dayDifferences = [];
 
@@ -114,32 +138,60 @@ class InvasionEvents {
         dayDifferences.push(diffDays);
       }
 
-      // Check if it's a consistent daily pattern
+      // Check if it's a consistent pattern
       const isDaily = dayDifferences.every((diff) => diff === 1);
       const isWeekly = dayDifferences.every((diff) => diff === 7);
+      const isBiWeekly = dayDifferences.every((diff) => diff === 14);
+      const isConsistent2Day = dayDifferences.every((diff) => diff === 2);
 
-      if (!isDaily && !isWeekly) {
+      if (!isDaily && !isWeekly && !isBiWeekly && !isConsistent2Day) {
+        console.log('DEBUG - No consistent pattern found for recurring event');
         return { success: false };
       }
 
       const startDate = sortedDates[0];
       const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
 
-      const recurrenceRule = {
-        frequency: isDaily
-          ? GuildScheduledEventRecurrenceRuleFrequency.Daily
-          : GuildScheduledEventRecurrenceRuleFrequency.Weekly,
-        interval: 1,
-        count: eventDates.length,
-      };
+      let recurrenceRule;
+      let patternName;
+
+      if (isDaily) {
+        recurrenceRule = {
+          frequency: GuildScheduledEventRecurrenceRuleFrequency.Daily,
+          interval: 1,
+          count: eventDates.length,
+        };
+        patternName = 'Daily';
+      } else if (isConsistent2Day) {
+        recurrenceRule = {
+          frequency: GuildScheduledEventRecurrenceRuleFrequency.Daily,
+          interval: 2,
+          count: eventDates.length,
+        };
+        patternName = 'Every 2 Days';
+      } else if (isWeekly) {
+        recurrenceRule = {
+          frequency: GuildScheduledEventRecurrenceRuleFrequency.Weekly,
+          interval: 1,
+          count: eventDates.length,
+        };
+        patternName = 'Weekly';
+      } else if (isBiWeekly) {
+        recurrenceRule = {
+          frequency: GuildScheduledEventRecurrenceRuleFrequency.Weekly,
+          interval: 2,
+          count: eventDates.length,
+        };
+        patternName = 'Bi-Weekly';
+      }
 
       const eventDescription = [
         '🛡️ **Alliance Invasion Series**',
         '',
-        `🔄 **Recurring:** ${isDaily ? 'Daily' : 'Weekly'} for ${eventDates.length} events`,
+        `🔄 **Recurring:** ${patternName} for ${eventDates.length} events`,
         `⏱️ **Duration:** ${durationMinutes} minutes each`,
         '',
-        '📅 **Event Times:**',
+        '📅 **Scheduled Times:**',
         ...sortedDates.map(
           (date, i) =>
             `${i + 1}. ${date.toLocaleDateString('en-US', {
@@ -152,16 +204,22 @@ class InvasionEvents {
             })} UTC`,
         ),
         '',
+        '🎯 **Each event will notify individually!**',
         '🎯 **Preparation Checklist:**',
         '• Gather your alliance members',
         '• Check troop formations',
         '• Verify attack strategies',
         '• Coordinate with alliance leadership',
         '',
-        '⚡ Ready for battle? Mark yourself as "Interested" to join!',
+        '⚡ Mark yourself as "Interested" to get notifications for all sessions!',
       ].join('\n');
 
-      await guild.scheduledEvents.create({
+      console.log(
+        'DEBUG - Creating recurring event with rule:',
+        recurrenceRule,
+      );
+
+      const createdEvent = await guild.scheduledEvents.create({
         name: `⚔️ ${eventName} Series`,
         description: eventDescription,
         scheduledStartTime: startDate,
@@ -174,13 +232,155 @@ class InvasionEvents {
         recurrenceRule,
       });
 
+      console.log(
+        'DEBUG - Recurring event created successfully:',
+        createdEvent.id,
+      );
+
       return {
         success: true,
         createdEvents: [{ name: `⚔️ ${eventName} Series`, date: startDate }],
         errors: [],
       };
     } catch (error) {
-      console.error('Recurring event creation failed:', error);
+      console.error('DEBUG - Recurring event creation failed:', error.message);
+      console.error('DEBUG - Error code:', error.code);
+      return { success: false };
+    }
+  }
+
+  // Try to create a series of individual events that reference each other
+  static async tryCreateEventSeries(
+    guild,
+    eventDates,
+    durationMinutes,
+    eventName,
+  ) {
+    try {
+      console.log('DEBUG - Attempting to create linked event series');
+
+      const sortedDates = eventDates.sort((a, b) => a.getTime() - b.getTime());
+      const createdEvents = [];
+      const errors = [];
+      const totalEvents = sortedDates.length;
+
+      // Create events with cross-references
+      for (let i = 0; i < sortedDates.length; i++) {
+        const currentDate = sortedDates[i];
+        const endDate = new Date(
+          currentDate.getTime() + durationMinutes * 60000,
+        );
+        const eventNumber = i + 1;
+
+        try {
+          const eventDescription = [
+            `🛡️ **Alliance Invasion ${eventNumber} of ${totalEvents}**`,
+            '',
+            `📅 **Part of Series:** ${eventName}`,
+            `⏱️ **Duration:** ${durationMinutes} minutes`,
+            '',
+            '🎯 **Series Schedule:**',
+            ...sortedDates.map((date, idx) => {
+              const isCurrentEvent = idx === i;
+              const marker = isCurrentEvent ? '👉' : '  ';
+              const status = idx < i ? '✅' : idx === i ? '🔥' : '📅';
+              return `${marker} ${status} **Event ${idx + 1}:** ${date.toLocaleDateString(
+                'en-US',
+                {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                },
+              )} at ${date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              })} UTC`;
+            }),
+            '',
+            '🔥 **This is your individual notification event!**',
+            '',
+            '🎯 **Preparation Checklist:**',
+            '• Gather your alliance members',
+            '• Check troop formations',
+            '• Verify attack strategies',
+            '• Coordinate with alliance leadership',
+            '',
+            '⚡ Mark yourself as "Interested" for this specific session!',
+          ].join('\n');
+
+          const createdEvent = await guild.scheduledEvents.create({
+            name: `⚔️ ${eventName} - Event ${eventNumber}/${totalEvents}`,
+            description: eventDescription,
+            scheduledStartTime: currentDate,
+            scheduledEndTime: endDate,
+            privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+            entityType: GuildScheduledEventEntityType.External,
+            entityMetadata: {
+              location: 'Avatar: Generations Game',
+            },
+          });
+
+          createdEvents.push({
+            name: createdEvent.name,
+            date: currentDate,
+            id: createdEvent.id,
+          });
+
+          console.log(
+            `DEBUG - Created event ${eventNumber}/${totalEvents}: ${createdEvent.id}`,
+          );
+        } catch (error) {
+          console.error(
+            `DEBUG - Failed to create event ${eventNumber}:`,
+            error.message,
+          );
+          errors.push({
+            date: currentDate,
+            error: error.message,
+          });
+        }
+      }
+
+      // If we created most events successfully, consider it a success
+      const successRate = createdEvents.length / totalEvents;
+      if (successRate >= 0.8) {
+        // 80% success rate threshold
+        console.log(
+          `DEBUG - Event series created successfully: ${createdEvents.length}/${totalEvents} events`,
+        );
+
+        return {
+          success: true,
+          createdEvents,
+          errors,
+          message:
+            errors.length > 0
+              ? `Created ${createdEvents.length}/${totalEvents} events successfully. ${errors.length} events failed to create.`
+              : `Successfully created ${createdEvents.length} individual events in the series!`,
+        };
+      } else {
+        console.log(
+          `DEBUG - Event series creation failed: only ${createdEvents.length}/${totalEvents} events created`,
+        );
+
+        // Clean up any events that were created
+        for (const event of createdEvents) {
+          try {
+            const discordEvent = await guild.scheduledEvents.fetch(event.id);
+            await discordEvent.delete();
+            console.log(`DEBUG - Cleaned up event: ${event.id}`);
+          } catch (cleanupError) {
+            console.error(
+              `DEBUG - Failed to cleanup event ${event.id}:`,
+              cleanupError.message,
+            );
+          }
+        }
+
+        return { success: false };
+      }
+    } catch (error) {
+      console.error('DEBUG - Event series creation failed:', error.message);
       return { success: false };
     }
   }
