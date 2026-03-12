@@ -25,12 +25,11 @@
   { "name": "Teo", "value": "teo" },
   { "name": "Toph", "value": "toph" },
   { "name": "Unalaq", "value": "unalaq" },
-  { "name": "Uncle_Iroh", "value": "uncle_iroh" },
+  { "name": "Uncle Iroh", "value": "uncle_iroh" },
   { "name": "Yangchen", "value": "yangchen" },
   { "name": "Yue", "value": "yue" },
   { "name": "Zuko", "value": "zuko" },
   { "name": "Cai", "value": "cai" },
-  { "name": "Fire Nation Aang", "value": "fire_nation_aang" },
   { "name": "Kuruk", "value": "kuruk" },
   { "name": "Avatar Hunter Zuko", "value": "avatar_hunter_zuko" },
   { "name": "Melon Lord", "value": "melon_lord" },
@@ -38,5 +37,7 @@
   { "name": "Wolf Warrior Sokka", "value": "wolf_warrior_sokka" },
   { "name": "Jinora", "value": "jinora" },
   { "name": "Desna Eska", "value": "desna_eska" },
-  { "name": "Lady Beifong Toph", "value": "lady_beifong_toph" }
+  { "name": "Lady Beifong Toph", "value": "lady_beifong_toph" },
+  { "name": "Kenshi", "value": "kenshi" },
+  { "name": "Phyan", "value": "phyan" }
 ]
