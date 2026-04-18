@@ -39,5 +39,7 @@
   { "name": "Desna Eska", "value": "desna_eska" },
   { "name": "Lady Beifong Toph", "value": "lady_beifong_toph" },
   { "name": "Kenshi", "value": "kenshi" },
-  { "name": "Phyan", "value": "phyan" }
+  { "name": "Phyan", "value": "phyan" },
+  { "name": "Ozai", "value": "ozai"},
+  { "name": "Opal", "value": "opal"}
 ]
