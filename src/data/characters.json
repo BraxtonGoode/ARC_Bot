@@ -41,5 +41,7 @@
   { "name": "Kenshi", "value": "kenshi" },
   { "name": "Phyan", "value": "phyan" },
   { "name": "Ozai", "value": "ozai"},
-  { "name": "Opal", "value": "opal"}
+  { "name": "Opal", "value": "opal"},
+  { "name": "Korra Disguised Equalist", "value": "korra_disguised_equalist"},
+  { "name": "Bolin", "value": "bolin"}
 ]
