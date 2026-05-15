@@ -58,14 +58,15 @@ module.exports = {
 
       if (interaction.commandName === 'tierlist') {
         const focusedValue = interaction.options.getFocused().toLowerCase();
+        const categoryOption = interaction.options.getString('category');
         const filtered = tierlistChoices
           .filter((choice) =>
-            choice.category.toLowerCase().includes(focusedValue) ||
-            choice.name.toLowerCase().includes(focusedValue) ||
-            choice.value.toLowerCase().includes(focusedValue)
+            (!categoryOption || choice.category === categoryOption) &&
+            (choice.name.toLowerCase().includes(focusedValue) ||
+            choice.value.toLowerCase().includes(focusedValue))
           )
           .slice(0, 25)
-          .map((choice) => ({ name: choice.name, value: choice.value, category: choice.category }));
+          .map((choice) => ({ name: choice.name, value: choice.value}));
         await interaction.respond(filtered);
         return;
       }
