@@ -15,13 +15,33 @@ const {
 
 module.exports = {
   name: 'tierlist',
+  // data: new SlashCommandBuilder()
+  //   .setName('tierlist')
+  //   .setDescription('Get the current hero tier lists')
+  //   .addStringOption((option) =>
+  //     option
+  //       .setName('tierlist')
+  //       .setDescription('choose a tier list version')
+  //       .setRequired(true)
+  //       .setAutocomplete(true),
+  //   ),
   data: new SlashCommandBuilder()
     .setName('tierlist')
-    .setDescription('Get the current hero tier list')
-    .addStringOption((option) =>
+    .setDescription('Get the current hero tier lists')
+    .addStringOption(option =>
+      option
+        .setName('category')
+        .setDescription('Choose a tierlist category')
+        .setRequired(true)
+        .addChoices(
+          { name: 'General', value: 'general' },
+          { name: 'Advanced', value: 'advanced' }
+        )
+    )
+    .addStringOption(option =>
       option
         .setName('tierlist')
-        .setDescription('choose a tier list version')
+        .setDescription('Choose a tierlist')
         .setRequired(true)
         .setAutocomplete(true)
     ),
@@ -33,7 +53,9 @@ module.exports = {
     const resolved = findClosestTierlist(tierlistChoice);
     if (!resolved) {
       return interaction.reply(
-        createErrorReply(`No matching tier list found for "${tierlistChoice}".`)
+        createErrorReply(
+          `No matching tier list found for "${tierlistChoice}".`,
+        ),
       );
     }
 
@@ -47,7 +69,7 @@ module.exports = {
         '..',
         'data',
         'tierlists',
-        `${filename}.json`
+        `${filename}.json`,
       );
       let dataRaw;
       try {
@@ -55,8 +77,8 @@ module.exports = {
       } catch {
         return interaction.reply(
           createErrorReply(
-            `Couldn't load tier list "${formattedTierlistName}" data.`
-          )
+            `Couldn't load tier list "${formattedTierlistName}" data.`,
+          ),
         );
       }
 
@@ -86,8 +108,8 @@ module.exports = {
       if (!imagePath) {
         return interaction.reply(
           createErrorReply(
-            `Couldn't find tier list image for "${formattedTierlistName}".`
-          )
+            `Couldn't find tier list image for "${formattedTierlistName}".`,
+          ),
         );
       }
 
@@ -96,7 +118,7 @@ module.exports = {
       const gallery = new MediaGalleryBuilder().addItems((item) =>
         item
           .setDescription(`${formattedTierlistName} Tier List`)
-          .setURL(`attachment://${path.basename(imagePath)}`)
+          .setURL(`attachment://${path.basename(imagePath)}`),
       );
 
       const componentsArray = [
@@ -137,7 +159,7 @@ module.exports = {
     } catch (error) {
       console.error('/tierlist error:', error);
       return interaction.reply(
-        createErrorReply('Error while loading tier list.')
+        createErrorReply('Error while loading tier list.'),
       );
     }
   },
