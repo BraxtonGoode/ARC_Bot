@@ -68,7 +68,7 @@ module.exports = {
         }
         const filtered = tierlistChoices
           .filter((choice) =>
-            choice.category === categoryOption.value &&
+            choice.category === selectedCategory &&
             (choice.name.toLowerCase().includes(focusedValue) ||
             choice.value.toLowerCase().includes(focusedValue))
           )
