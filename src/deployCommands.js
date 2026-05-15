@@ -1,4 +1,3 @@
-require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -47,8 +46,5 @@ async function deployCommands() {
   }
 }
 
-if (require.main === module) {
-  deployCommands();
-}
 
 module.exports = { deployCommands };

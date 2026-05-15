@@ -1,5 +1,5 @@
 [
   { "name": "Arena Tierlist", "value": "arena_tierlist", "category": "general" },
-  { "name": "General Tierlist", "value": "general_tierlist", "category": "general" }
+  { "name": "General Tierlist", "value": "general_tierlist", "category": "advanced" }
   
 ]
