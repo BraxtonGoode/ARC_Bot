@@ -58,8 +58,9 @@ module.exports = {
 
       if (interaction.commandName === 'tierlist') {
         const focusedValue = interaction.options.getFocused().toLowerCase();
-        const categoryOption = interaction.options.data.find(option => option.name === 'category');
-        if (!categoryOption) {
+        const categoryData = interaction.options.data.find(option => option.name === 'category');
+        const selectedCategory = categoryData ? categoryData.value : null;
+        if (!selectedCategory) {
           await interaction.respond([
             { name: 'Please select a category first', value: 'none' },
           ]);
