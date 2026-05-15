@@ -1,9 +1,11 @@
+require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const config = require('./config');
 const logger = require('./utils/logger');
+
 
 const HASH_FILE = path.join(__dirname, '.lastcommands.hash');
 
@@ -43,6 +45,10 @@ async function deployCommands() {
   } catch (error) {
     logger.error('Error while deploying commands:', error);
   }
+}
+
+if (require.main === module) {
+  deployCommands();
 }
 
 module.exports = { deployCommands };
