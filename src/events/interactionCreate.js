@@ -57,39 +57,18 @@ module.exports = {
       }
 
       if (interaction.commandName === 'tierlist') {
-        const focusedValue = interaction.options.getFocused().toLowerCase();
-        const categoryData = interaction.options.data.find(option => option.name === 'category');
-        const selectedCategory = categoryData ? categoryData.value : null;
-        if (!selectedCategory) {
-          await interaction.respond([
-            { name: 'Please select a category first', value: 'none' },
-          ]);
-          return;
-        }
-        const filtered = tierlistChoices
-          .filter((choice) =>
-            choice.category === selectedCategory &&
-            (choice.name.toLowerCase().includes(focusedValue) ||
-            choice.value.toLowerCase().includes(focusedValue))
+      const focusedValue = interaction.options.getFocused().toLowerCase();
+      const filtered = tierlistChoices
+        .filter(
+          (choice) =>
+            choice.name.toLowerCase().includes(focusedValue) ||
+              choice.value.toLowerCase().includes(focusedValue),
           )
           .slice(0, 25)
-          .map((choice) => ({ name: choice.name, value: choice.value}));
+          .map((choice) => ({ name: choice.name, value: choice.value }));
         await interaction.respond(filtered);
         return;
       }
-
-      // const focusedValue = interaction.options.getFocused().toLowerCase();
-      // const filtered = tierlistChoices
-      //   .filter(
-      //     (choice) =>
-      //       choice.name.toLowerCase().includes(focusedValue) ||
-      //         choice.value.toLowerCase().includes(focusedValue),
-      //     )
-      //     .slice(0, 25)
-      //     .map((choice) => ({ name: choice.name, value: choice.value }));
-      //   await interaction.respond(filtered);
-      //   return;
-      // }
 
       await interaction.respond([]);
       return;

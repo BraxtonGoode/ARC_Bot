@@ -15,35 +15,15 @@ const {
 
 module.exports = {
   name: 'tierlist',
-  // data: new SlashCommandBuilder()
-  //   .setName('tierlist')
-  //   .setDescription('Get the current hero tier lists')
-  //   .addStringOption((option) =>
-  //     option
-  //       .setName('tierlist')
-  //       .setDescription('choose a tier list version')
-  //       .setRequired(true)
-  //       .setAutocomplete(true),
-  //   ),
   data: new SlashCommandBuilder()
     .setName('tierlist')
     .setDescription('Get the current hero tier lists')
-    .addStringOption(option =>
-      option
-        .setName('category')
-        .setDescription('Choose a tierlist category')
-        .setRequired(true)
-        .addChoices(
-          { name: 'General', value: 'general' },
-          { name: 'Advanced', value: 'advanced' }
-        )
-    )
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('tierlist')
-        .setDescription('Choose a tierlist')
+        .setDescription('choose a tier list version')
         .setRequired(true)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     ),
 
   async execute(interaction) {
