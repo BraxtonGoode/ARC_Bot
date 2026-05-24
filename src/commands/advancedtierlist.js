@@ -14,9 +14,9 @@ const {
 } = require('../utils/helpers');
 
 module.exports = {
-  name: 'tierlist',
+  name: 'advancedtierlist',
   data: new SlashCommandBuilder()
-    .setName('tierlist')
+    .setName('advancedtierlist')
     .setDescription('Get the current hero tier lists')
     .addStringOption((option) =>
       option
@@ -35,6 +35,29 @@ module.exports = {
       return interaction.reply(
         createErrorReply(
           `No matching tier list found for "${tierlistChoice}".`,
+        ),
+      );
+    }
+
+    // Validate that the selected tierlist belongs to the advanced category
+    const tierlistsPath = path.join(__dirname, '..', 'data', 'tierlists.json');
+    let tierlistChoices = [];
+
+    try {
+      const raw = await fs.promises.readFile(tierlistsPath, 'utf8');
+      tierlistChoices = JSON.parse(raw);
+    } catch {
+      return interaction.reply(
+        createErrorReply('Could not load tierlist categories.'),
+      );
+    }
+
+    const selected = tierlistChoices.find((choice) => choice.value === resolved);
+
+    if (!selected || selected.category !== 'advanced') {
+      return interaction.reply(
+        createErrorReply(
+          'That tierlist is not in the Advanced category. Use /generaltierlist for general lists.',
         ),
       );
     }
