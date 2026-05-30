@@ -127,7 +127,7 @@ module.exports = {
       const componentsArray = [
         {
           type: ComponentType.TextDisplay,
-          content: `**${formattedTierlistName} Tier List**`,
+          content: `**${formattedTierlistName}**`,
         },
         { type: ComponentType.Separator },
         gallery,

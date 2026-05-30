@@ -17,7 +17,8 @@ module.exports = {
 - /tip \`name\` - Get different gameplay tips.
 - /help - This help message.
 - /skills \`hero\` - Get the skill order for a hero.
-- /tierlist \`type of tierlist\` - Get the current hero tier list.
+- /advancedtierlist \`type of tierlist\` - Get the current advanced hero tier list information such as best DPS and Best Leaders.
+- /generaltierlist \`type of tierlist\` - Get the current general hero tier list information for quick reference.
 - /talenttree \`hero\` - Get the talent tree for a hero.
 - /shardcalculator - Calculate character shards needed for star/grade upgrades.
 - /skillcalculator - Calculate skill shards needed for skill level upgrades.
