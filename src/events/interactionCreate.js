@@ -56,13 +56,31 @@ module.exports = {
         return;
       }
 
-      if (interaction.commandName === 'tierlist') {
-        const focusedValue = interaction.options.getFocused().toLowerCase();
-        const filtered = tierlistChoices
-          .filter(
-            (choice) =>
-              choice.name.toLowerCase().includes(focusedValue) ||
-              choice.value.toLowerCase().includes(focusedValue),
+      // general tierlist autocomplete handler
+      if (interaction.commandName === 'generaltierlist') {
+      const focusedValue = interaction.options.getFocused().toLowerCase();
+      const filtered = tierlistChoices
+        .filter(
+          (choice) =>
+            choice.category === 'general' &&
+            (choice.name.toLowerCase().includes(focusedValue) ||
+              choice.value.toLowerCase().includes(focusedValue)),
+          )
+          .slice(0, 25)
+          .map((choice) => ({ name: choice.name, value: choice.value }));
+        await interaction.respond(filtered);
+        return;
+      }
+
+      // advanced tierlist autocomplete handler (if we had more than one tierlist category)
+      if (interaction.commandName === 'advancedtierlist') {
+      const focusedValue = interaction.options.getFocused().toLowerCase();
+      const filtered = tierlistChoices
+        .filter(
+          (choice) =>
+            choice.category === 'advanced' &&
+            (choice.name.toLowerCase().includes(focusedValue) ||
+              choice.value.toLowerCase().includes(focusedValue)),
           )
           .slice(0, 25)
           .map((choice) => ({ name: choice.name, value: choice.value }));
@@ -72,6 +90,8 @@ module.exports = {
 
       await interaction.respond([]);
       return;
+      
+      
     }
 
     // Handle button interactions

@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const config = require('./config');
 const logger = require('./utils/logger');
 
+
 const HASH_FILE = path.join(__dirname, '.lastcommands.hash');
 
 function getCommands() {
@@ -44,5 +45,6 @@ async function deployCommands() {
     logger.error('Error while deploying commands:', error);
   }
 }
+
 
 module.exports = { deployCommands };

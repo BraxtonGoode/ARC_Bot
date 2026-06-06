@@ -14,16 +14,16 @@ const {
 } = require('../utils/helpers');
 
 module.exports = {
-  name: 'tierlist',
+  name: 'advancedtierlist',
   data: new SlashCommandBuilder()
-    .setName('tierlist')
-    .setDescription('Get the current hero tier list')
+    .setName('advancedtierlist')
+    .setDescription('Get the current hero tier lists')
     .addStringOption((option) =>
       option
         .setName('tierlist')
         .setDescription('choose a tier list version')
         .setRequired(true)
-        .setAutocomplete(true)
+        .setAutocomplete(true),
     ),
 
   async execute(interaction) {
@@ -33,7 +33,32 @@ module.exports = {
     const resolved = findClosestTierlist(tierlistChoice);
     if (!resolved) {
       return interaction.reply(
-        createErrorReply(`No matching tier list found for "${tierlistChoice}".`)
+        createErrorReply(
+          `No matching tier list found for "${tierlistChoice}".`,
+        ),
+      );
+    }
+
+    // Validate that the selected tierlist belongs to the advanced category
+    const tierlistsPath = path.join(__dirname, '..', 'data', 'tierlists.json');
+    let tierlistChoices = [];
+
+    try {
+      const raw = await fs.promises.readFile(tierlistsPath, 'utf8');
+      tierlistChoices = JSON.parse(raw);
+    } catch {
+      return interaction.reply(
+        createErrorReply('Could not load tierlist categories.'),
+      );
+    }
+
+    const selected = tierlistChoices.find((choice) => choice.value === resolved);
+
+    if (!selected || selected.category !== 'advanced') {
+      return interaction.reply(
+        createErrorReply(
+          'That tierlist is not in the Advanced category. Use /generaltierlist for general lists.',
+        ),
       );
     }
 
@@ -47,7 +72,7 @@ module.exports = {
         '..',
         'data',
         'tierlists',
-        `${filename}.json`
+        `${filename}.json`,
       );
       let dataRaw;
       try {
@@ -55,8 +80,8 @@ module.exports = {
       } catch {
         return interaction.reply(
           createErrorReply(
-            `Couldn't load tier list "${formattedTierlistName}" data.`
-          )
+            `Couldn't load tier list "${formattedTierlistName}" data.`,
+          ),
         );
       }
 
@@ -86,8 +111,8 @@ module.exports = {
       if (!imagePath) {
         return interaction.reply(
           createErrorReply(
-            `Couldn't find tier list image for "${formattedTierlistName}".`
-          )
+            `Couldn't find tier list image for "${formattedTierlistName}".`,
+          ),
         );
       }
 
@@ -96,13 +121,13 @@ module.exports = {
       const gallery = new MediaGalleryBuilder().addItems((item) =>
         item
           .setDescription(`${formattedTierlistName} Tier List`)
-          .setURL(`attachment://${path.basename(imagePath)}`)
+          .setURL(`attachment://${path.basename(imagePath)}`),
       );
 
       const componentsArray = [
         {
           type: ComponentType.TextDisplay,
-          content: `**${formattedTierlistName} Tier List**`,
+          content: `**${formattedTierlistName}**`,
         },
         { type: ComponentType.Separator },
         gallery,
@@ -137,7 +162,7 @@ module.exports = {
     } catch (error) {
       console.error('/tierlist error:', error);
       return interaction.reply(
-        createErrorReply('Error while loading tier list.')
+        createErrorReply('Error while loading tier list.'),
       );
     }
   },
