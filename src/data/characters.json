@@ -43,5 +43,7 @@
   { "name": "Ozai", "value": "ozai"},
   { "name": "Opal", "value": "opal"},
   { "name": "Korra Disguised Equalist", "value": "korra_disguised_equalist"},
-  { "name": "Bolin", "value": "bolin"}
+  { "name": "Bolin", "value": "bolin"},
+  { "name": "Ty Lee", "value": "ty_lee"},
+  { "name": "Jetsun", "value": "jetsun"}
 ]
