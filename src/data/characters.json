@@ -45,5 +45,7 @@
   { "name": "Korra Disguised Equalist", "value": "korra_disguised_equalist"},
   { "name": "Bolin", "value": "bolin"},
   { "name": "Ty Lee", "value": "ty_lee"},
-  { "name": "Jetsun", "value": "jetsun"}
+  { "name": "Jetsun", "value": "jetsun"},
+  { "name": "King Bumi Mad King", "value": "king_bumi_mad_king"},
+  { "name": "Katara Sapphire Fire", "value":"katara_sapphire_fire"}
 ]
