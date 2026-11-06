@@ -47,5 +47,7 @@
   { "name": "Ty Lee", "value": "ty_lee"},
   { "name": "Jetsun", "value": "jetsun"},
   { "name": "King Bumi Mad King", "value": "king_bumi_mad_king"},
-  { "name": "Katara Sapphire Fire", "value":"katara_sapphire_fire"}
+  { "name": "Katara Sapphire Fire", "value":"katara_sapphire_fire"},
+  { "name": "Kelsang", "value": "kelsang"},
+  { "name": "Rangi", "value": "rangi"}
 ]
